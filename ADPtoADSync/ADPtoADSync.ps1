@@ -85,6 +85,16 @@ FOREACH($ADPUser in $ADPUsers)
 		if($ADPUser.state -ne $null -or $ADPUser.state -ne ""){$aduser|Set-ADUser -State $ADPUser.state}
 		if($ADPUser.street -ne $null -or $ADPUser.street -ne ""){$aduser|Set-ADUser -StreetAddress $ADPUser.street}
 		if($ADPUser.employeeID -ne $null -or $ADPUser.employeeID -ne ""){$aduser|Set-ADUser -EmployeeID $ADPUser.employeeID}
+		if($ADPUser.jobtitle -ne $null -or $ADPUser.jobtitle -ne ""){$aduser|Set-ADUser -Title $ADPUser.jobtitle}
+		if($ADPUser.manager -ne $null -or $ADPUser.manager -ne "")
+			{
+			$mgr = $ADPUser.mgr
+			$mgrfn = ($mgr.split(",")[1]).Trim()
+			$mgrln = $mgr.split(",")[0].Trim()
+			$mgrname = "*$mgrfn*$mgrln*"
+			$Manager = Get-ADuser -Filter {Name -like $mgrname}
+				$aduser|Set-ADUser -Manager $Manager
+			}
 		}
 
 	#clear variables from memory so that no accidental write occurs to wrong user
