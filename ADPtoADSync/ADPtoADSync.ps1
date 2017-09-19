@@ -28,11 +28,11 @@
 #>
 
 #definition for department codes
-$deptlookup = @{710 = "BI Corp Administration";11002 = "Epson Depot";11007 = "Epson Depot - HR";14002 = "Altria Tech Services";15102 = "Asset Management Services";
-	15402 = "HII Services";20202 = "TLC Indiana";20502 = "TLC Virgina";21102 = "USF Services";30502 = "Deskside Services";55002 = "Service Desk";55005 = "Service Desk - Mgmt";
-	60005 = "Management";61002 = "Project Management";70003 = "Product - Operations";74502 = "Engineering - Tech Ops";75002 = "Engineering - Projects";75005 = "Engineering - Mgmt";
-	75502 = "Mobility Solutions";75505 = "Mobility Solutions - Mgmt";77002 = "Service Delivery Management";79008 = "Marketing";79504 = "Sales - Business Development";
-	90006 = "Headquarters - Accounting";90007 = "Headquarters - HR";92509 = "Headquarters - IT"}
+$deptlookup = @{710 = "710 - BI Corp Administration";11002 = "11002 - Epson Depot";11007 = "11007 - Epson Depot - HR";14002 = "14002 - Altria Tech Services";15102 = "15102 - Asset Management Services";
+	15402 = "15402 - HII Services";20202 = "20202 - TLC Indiana";20502 = "20502 - TLC Virgina";21102 = "21102 - USF Services";30502 = "30502 - Deskside Services";55002 = "55002 - Service Desk";
+	55005 = "55005 - Service Desk - Mgmt";60005 = "60005 - Management";61002 = "61002 - Project Management";70003 = "70003 - Product - Operations";74502 = "74502 - Engineering - Tech Ops";
+	75002 = "75002 - Engineering - Projects";75005 = "75005 - Engineering - Mgmt";75502 = "75502 - Mobility Solutions";75505 = "75505 - Mobility Solutions - Mgmt";77002 = "77002 - Service Delivery Management";
+	79008 = "79008 - Marketing";79504 = "79504 - Sales - Business Development";90006 = "90006 - Headquarters - Accounting";90007 = "90007 - Headquarters - HR";92509 = "92509 - Headquarters - IT"}
 
 #File Select Function
 function Get-FileName
@@ -80,6 +80,11 @@ FOREACH($ADPUser in $ADPUsers)
 		if($ADPUser.mobile -ne $null -or $ADPUser.mobile -ne ""){$aduser|Set-ADUser -MobilePhone $ADPUser.mobile}
 		if($ADPUser.telephone -ne $null -or $ADPUser.telephone -ne ""){$aduser|Set-ADUser -OfficePhone $ADPUser.telephone}
 		if($ADPUser.deptcode -ne $null -or $ADPUser.deptcode -ne ""){$aduser|Set-ADUser -department $deptlookup[$ADPUser.deptcode]}
+		if($ADPUser.city -ne $null -or $ADPUser.city -ne ""){$aduser|Set-ADUser -City $ADPUser.city}
+		if($ADPUser.zip -ne $null -or $ADPUser.zip -ne ""){$aduser|Set-ADUser -PostalCode $ADPUser.zip}
+		if($ADPUser.state -ne $null -or $ADPUser.state -ne ""){$aduser|Set-ADUser -State $ADPUser.state}
+		if($ADPUser.street -ne $null -or $ADPUser.street -ne ""){$aduser|Set-ADUser -StreetAddress $ADPUser.street}
+		if($ADPUser.employeeID -ne $null -or $ADPUser.employeeID -ne ""){$aduser|Set-ADUser -EmployeeID $ADPUser.employeeID}
 		}
 
 	#clear variables from memory so that no accidental write occurs to wrong user
