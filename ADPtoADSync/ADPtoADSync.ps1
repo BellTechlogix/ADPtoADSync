@@ -21,7 +21,7 @@
 	givenName = FirsName
 	sn = LastName
 	homePostalAddress = 
-	manager = has to be full CN for instance (CN=name,OU=whatever,OU=whatever,DC=btl,DC=net)
+	manager = Employees Supervisor/Manager
 	mobile = company cell number
 	telephoneNumber = company number
 	title = Job Title
@@ -89,6 +89,7 @@ FOREACH($ADPUser in $ADPUsers)
 		if($ADPUser.manager -ne $null -or $ADPUser.manager -ne "")
 			{
 			$mgr = $ADPUser.mgr
+			#split and trim the manager field input to search AD for the user object
 			$mgrfn = ($mgr.split(",")[1]).Trim()
 			$mgrln = $mgr.split(",")[0].Trim()
 			$mgrname = "*$mgrfn*$mgrln*"
