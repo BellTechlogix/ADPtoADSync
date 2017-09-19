@@ -69,3 +69,20 @@ function Get-FileName
 #ADP data import
 $ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File" 
 $ADPUsers = Import-Csv $ADPFile
+
+#Loop though users in ADPFile import, match them to AD then write the attributes
+FOREACH($ADPUser in $ADPUsers)
+{
+	#Get ActiveDirectory User from email address
+	$aduser = get-aduser -Filter{emailaddress -eq $ADPUser.email}
+	#check if ADUser is null, if not then proceed, else skip user
+	if($aduser -ne $null){
+		if($ADPUser.mobile -ne $null -or $ADPUser.mobile -ne ""){$aduser|Set-ADUser -MobilePhone $ADPUser.mobile}
+		if($ADPUser.telephone -ne $null -or $ADPUser.telephone -ne ""){$aduser|Set-ADUser -OfficePhone $ADPUser.telephone}
+		if($ADPUser.deptcode -ne $null -or $ADPUser.deptcode -ne ""){$aduser|Set-ADUser -department $deptlookup[$ADPUser.deptcode]}
+		}
+
+	#clear variables from memory so that no accidental write occurs to wrong user
+	$aduser = $null
+	$ADPuser = $null
+}
