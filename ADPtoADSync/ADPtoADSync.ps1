@@ -5,19 +5,26 @@
 <#
 	AD Attribute Details for use in Script now/or later
 	l = location(City)
+	postalCode = zipcode
+	st = State
+	streetAddress = street address
 	mail = emailaddress
 	employeeID = WhatFromADP
 	Department = 
 	c = CountryCode
 	cn = Name
+	name = full name
 	co = Country Name
 	company = company
 	countryCode - 840=US
 	department = Dept Accounting Codes
 	givenName = FirsName
-	surName = LastName
+	sn = LastName
 	homePostalAddress = 
 	manager = has to be full CN for instance (CN=name,OU=whatever,OU=whatever,DC=btl,DC=net)
+	mobile = company cell number
+	telephoneNumber = company number
+	title = Job Title
 #>
 
 #definition for department codes
@@ -26,3 +33,39 @@ $deptlookup = @{710 = "BI Corp Administration";11002 = "Epson Depot";11007 = "Ep
 	60005 = "Management";61002 = "Project Management";70003 = "Product - Operations";74502 = "Engineering - Tech Ops";75002 = "Engineering - Projects";75005 = "Engineering - Mgmt";
 	75502 = "Mobility Solutions";75505 = "Mobility Solutions - Mgmt";77002 = "Service Delivery Management";79008 = "Marketing";79504 = "Sales - Business Development";
 	90006 = "Headquarters - Accounting";90007 = "Headquarters - HR";92509 = "Headquarters - IT"}
+
+#File Select Function
+function Get-FileName
+{
+  param(
+      [Parameter(Mandatory=$false)]
+      [string] $Filter,
+      [Parameter(Mandatory=$false)]
+      [switch]$Obj,
+      [Parameter(Mandatory=$False)]
+      [string]$Title = "Select A File"
+    )
+   if(!($Title)) { $Title="Select Input File"} ## why not a default like i showed?
+  
+	[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+	$OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+  $OpenFileDialog.initialDirectory = $initialDirectory
+  $OpenFileDialog.FileName = $Title
+  #can be set to filter file types
+  IF($Filter -ne $null){
+  $FilterString = '{0} (*.{1})|*.{1}' -f $Filter.ToUpper(), $Filter
+	$OpenFileDialog.filter = $FilterString}
+  if(!($Filter)) { $Filter = "All Files (*.*)| *.*"
+  $OpenFileDialog.filter = $Filter
+  }
+  $OpenFileDialog.ShowDialog() | Out-Null
+  IF($OBJ){
+  $fileobject = GI -Path $OpenFileDialog.FileName.tostring()
+  Return $fileObject
+  }
+  else{Return $OpenFileDialog.FileName}
+}
+
+#ADP data import
+$ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File" 
+$ADPUsers = Import-Csv $ADPFile
