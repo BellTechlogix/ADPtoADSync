@@ -1,35 +1,114 @@
-﻿# ADPtoADPCompare.ps1
+﻿#
+# ADPtoADSync.ps1
 # Created by Kristopher Roy
-# Script purpose - compare ADP output details back to AD prior to any writing changes
-$adpinput = import-csv C:\Belltech\ADPOutput_09_22_17.csv
-$ADusers = get-aduser -filter * -Properties userprincipalname,department,sn,MobilePhone,OfficePhone,City,postalCode,state,street,employeeID,mail,title,manager,description|select UserPrincipalName,givenName,sn,mail,department,MobilePhone,OfficePhone,City,postalCode,state,street,employeeID,title,manager,description,ADPName,NoADPMatch
+# Script purpose - Write ADP details back to AD Attribute
+<#
+	AD Attribute Details for use in Script now/or later
+	l = location(City)
+	postalCode = zipcode
+	st = State
+	streetAddress = street address
+	mail = emailaddress
+	employeeID = WhatFromADP
+	Department = 
+	c = CountryCode
+	cn = Name
+	name = full name
+	co = Country Name
+	company = company
+	countryCode - 840=US
+	department = Dept Accounting Codes
+	givenName = FirsName
+	sn = LastName
+	homePostalAddress = 
+	manager = Employees Supervisor/Manager
+	mobile = company cell number
+	telephoneNumber = company number
+	title = Job Title
+#>
 
-FOREACH($USER in $ADUSers)
+#definition for department codes
+$deptlookup = @{710 = "710 - BI Corp Administration";11002 = "11002 - Epson Depot";11007 = "11007 - Epson Depot - HR";14002 = "14002 - Altria Tech Services";15102 = "15102 - Asset Management Services";
+	15402 = "15402 - HII Services";20202 = "20202 - TLC Indiana";20502 = "20502 - TLC Virgina";21102 = "21102 - USF Services";30502 = "30502 - Deskside Services";55002 = "55002 - Service Desk";
+	55005 = "55005 - Service Desk - Mgmt";60005 = "60005 - Management";61002 = "61002 - Project Management";70003 = "70003 - Product - Operations";74502 = "74502 - Engineering - Tech Ops";
+	75002 = "75002 - Engineering - Projects";75005 = "75005 - Engineering - Mgmt";75502 = "75502 - Mobility Solutions";75505 = "75505 - Mobility Solutions - Mgmt";77002 = "77002 - Service Delivery Management";
+	79008 = "79008 - Marketing";79504 = "79504 - Sales - Business Development";90006 = "90006 - Headquarters - Accounting";90007 = "90007 - Headquarters - HR";92509 = "92509 - Headquarters - IT"}
+
+#File Select Function
+function Get-FileName
 {
-    $adpuser = $adpinput|where{($_."Work Contact: Work Email").trim() -eq $user.mail}
-    If($adpuser -eq $null -or $adpuser -eq "")
-    {
-        #$adpuser = $adpinput|where{($_."employee_name").split(",")[0] -eq $user.sn}
-        #($adpuser.Employee_name.split(",")[1]).trim().split("")[0]
-        IF($User.sn -ne $null){
-        $adpmatch = $User.sn+", "+$User.givenName
-        $adpuser = $adpinput|where{$_.Employee_name -like "*"+$adpmatch+"*"}
-        #$adpln = (($adpinput|where{($_."employee_name").split(",")[0] -eq $user.sn})."employee_name").split(",")[0]
-        #$adpfn = (($adpinput|where{(($_."employee_name").split(",")[1]).split("")[0] -eq $user.givenName})."employee_name").split(",")[1]
-        #-and $_.DeptNumber+"*" -like $user.department}
-        #Write-Host $aduser "no match"
-        #$adpuser
-        $adpmatch = $null
-        }
-    }
-    If($adpuser -ne $null -and $adpuser -ne "")
-    {
-        $user.ADPName = $adpuser.Employee_name
-        $user.NoADPMatch = "False"
-        #$user.mail
-        #$adpuser.Employee_name
-    }
-    $adpuser = $null
+  param(
+      [Parameter(Mandatory=$false)]
+      [string] $Filter,
+      [Parameter(Mandatory=$false)]
+      [switch]$Obj,
+      [Parameter(Mandatory=$False)]
+      [string]$Title = "Select A File"
+    )
+   if(!($Title)) { $Title="Select Input File"} ## why not a default like i showed?
+  
+	[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
+	$OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+  $OpenFileDialog.initialDirectory = $initialDirectory
+  $OpenFileDialog.FileName = $Title
+  #can be set to filter file types
+  IF($Filter -ne $null){
+  $FilterString = '{0} (*.{1})|*.{1}' -f $Filter.ToUpper(), $Filter
+	$OpenFileDialog.filter = $FilterString}
+  if(!($Filter)) { $Filter = "All Files (*.*)| *.*"
+  $OpenFileDialog.filter = $Filter
+  }
+  $OpenFileDialog.ShowDialog() | Out-Null
+  IF($OBJ){
+  $fileobject = GI -Path $OpenFileDialog.FileName.tostring()
+  Return $fileObject
+  }
+  else{Return $OpenFileDialog.FileName}
 }
 
-$ADUSers|export-csv c:\belltech\ADP_AD_compare_09_26_17.csv
+#ADP data import
+$ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File" 
+$ADPUsers = Import-Csv $ADPFile
+
+#Loop though users in ADPFile import, match them to AD then write the attributes
+FOREACH($ADPUser in $ADPUsers)
+{
+	#Get ActiveDirectory User from email address
+	$aduser = get-aduser -Filter{emailaddress -eq ($_."Work Contact: Work Email").trim()}
+    #check if ADUser is null then try again
+    if($aduser -eq $null -or $aduser -eq "")
+    {
+       $adpln = ((($adpinput|where{($_."employee_name").split(",")[0] -eq $user.sn})."employee_name").split(",")[0]).trim()
+       $adpfn = ((($adpinput|where{(($_."employee_name").split(",")[1]).split("")[0] -eq $user.givenName})."employee_name").split(",")[1]).trim()
+       #match ADPUser last name
+       $aduser = get-aduser -filter{sn -eq $adpln}
+       #If you get more then one on last name, then match first name
+       if($aduser.count > 1){$aduser = $aduser|where{$_.givenName -eq $adpfn}}
+    }
+	#check if ADUser is still null, if not then proceed, else skip user
+if($aduser -ne $null){
+		if($ADPUser.mobile -ne $null -or $ADPUser.mobile -ne ""){$aduser|Set-ADUser -MobilePhone $ADPUser.mobile}
+		if($ADPUser.telephone -ne $null -or $ADPUser.telephone -ne ""){$aduser|Set-ADUser -OfficePhone $ADPUser.telephone}
+		if($ADPUser.deptcode -ne $null -or $ADPUser.deptcode -ne ""){$aduser|Set-ADUser -department $deptlookup[$ADPUser.deptcode]}
+		if($ADPUser.city -ne $null -or $ADPUser.city -ne ""){$aduser|Set-ADUser -City $ADPUser.city}
+		if($ADPUser.zip -ne $null -or $ADPUser.zip -ne ""){$aduser|Set-ADUser -PostalCode $ADPUser.zip}
+		if($ADPUser.state -ne $null -or $ADPUser.state -ne ""){$aduser|Set-ADUser -State $ADPUser.state}
+		if($ADPUser.street -ne $null -or $ADPUser.street -ne ""){$aduser|Set-ADUser -StreetAddress $ADPUser.street}
+		if($ADPUser.employeeID -ne $null -or $ADPUser.employeeID -ne ""){$aduser|Set-ADUser -EmployeeID $ADPUser.employeeID}
+		if($ADPUser.jobtitle -ne $null -or $ADPUser.jobtitle -ne ""){$aduser|Set-ADUser -Title $ADPUser.jobtitle}
+		if($ADPUser.manager -ne $null -or $ADPUser.manager -ne "")
+			{
+			$mgr = $ADPUser.mgr
+			#split and trim the manager field input to search AD for the user object
+			$mgrfn = ($mgr.split(",")[1]).Trim()
+			$mgrln = $mgr.split(",")[0].Trim()
+			$mgrname = "*$mgrfn*$mgrln*"
+			$Manager = Get-ADuser -Filter {Name -like $mgrname}
+				$aduser|Set-ADUser -Manager $Manager
+			}
+		}
+
+	#clear variables from memory so that no accidental write occurs to wrong user
+	$aduser = $null
+	$ADPuser = $null
+}
