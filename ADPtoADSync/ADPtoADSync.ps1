@@ -67,8 +67,11 @@ function Get-FileName
 }
 
 #ADP data import
-$ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File" 
+$ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File"  -Obj
 $ADPUsers = Import-Csv $ADPFile
+
+#Create New Error Log File
+If((test-path ($ADPFile.PSParentPath+"\adpimport.log")) -eq $False){New-Item ($ADPFile.PSParentPath+"\adpimport.log") -type file}
 
 #Loop though users in ADPFile import, match them to AD then write the attributes
 FOREACH($ADPUser in $ADPUsers)
@@ -133,6 +136,15 @@ FOREACH($ADPUser in $ADPUsers)
 			}
             $aduser|Set-ADUser -Manager $Manager
 		}
+	}
+
+	#IF ADuser is still null add to log
+	if($aduser -eq $null -or $aduser -eq "")
+	{
+		$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+		$errorline = "`n"+$timestamp+" Error "+$ADPUser.Employee_name+" No Match Found, AD User Data Not Updated"
+		Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $errorline
+		$errorline = $null
 	}
 
 	#clear variables from memory so that no accidental write occurs to wrong user
