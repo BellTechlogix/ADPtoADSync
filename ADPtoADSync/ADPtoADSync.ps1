@@ -79,6 +79,7 @@ FOREACH($ADPUser in $ADPUsers)
     #Split out ADP FirstName and LastName
     $adpln = (($adpuser."employee_name").split(",")[0]).trim()
     $adpfn = ((($adpuser."employee_name").split(",")[1]).trim()).split("")[0].trim()
+	$adpname = "$adpln, $adpfn"
 
 	#Get ActiveDirectory User from email address
 	$email = ($ADPUser."Work Contact: Work Email").trim()
@@ -100,20 +101,137 @@ FOREACH($ADPUser in $ADPUsers)
     }
 	#check if ADUser is still null, if not then proceed, else skip user
     if($aduser -ne $null){
-		if($ADPUser."Work Contact: Work Mobile" -and $null -or $ADPUser."Work Contact: Work Mobile" -ne ""){$aduser|Set-ADUser -MobilePhone $ADPUser."Work Contact: Work Mobile"}
-		if($ADPUser."Work Contact: Work Phone" -and $null -or $ADPUser."Work Contact: Work Phone" -ne ""){$aduser|Set-ADUser -OfficePhone $ADPUser."Work Contact: Work Phone"}
-		if($ADPUser.DeptNumber -ne $null -and $ADPUser.DeptNumber -ne ""){$aduser|Set-ADUser -department $deptlookup[$ADPUser.DeptNumber.trim()]}
-		if($ADPUser."Location City" -ne $null -and $ADPUser."Location City" -ne ""){$aduser|Set-ADUser -City $ADPUser."Location City"}
-		if($ADPUser."Location Postal Code" -ne $null -and $ADPUser."Location Postal Code" -ne ""){$aduser|Set-ADUser -PostalCode $ADPUser."Location Postal Code"}
-		if($ADPUser."Location State/Territory" -ne $null -and $ADPUser."Location State/Territory" -ne ""){$aduser|Set-ADUser -State $ADPUser."Location State/Territory"}
-		if($ADPUser."Location Address Line 1" -ne $null -and $ADPUser."Location Address Line 1" -ne ""){$aduser|Set-ADUser -StreetAddress $ADPUser."Location Address Line 1"}
-        if($ADPUser."Location Address Line 1" -eq $null -or $ADPUser."Location Address Line 1" -eq ""){$aduser|Set-ADUser -StreetAddress "REMOTE"}
-        if($ADPUser."Location Address Line 1" -eq $null -or $ADPUser."Location Address Line 1" -eq ""){$aduser|Set-ADUser -Office "REMOTE"}
-        if($ADPUser."Location Address Line 1" -ne $null -and $ADPUser."Location Address Line 1" -ne ""){$aduser|Set-ADUser -Office $ADPUser."Location Description"}
-		if($ADPUser.employeeID -ne $null -and $ADPUser.employeeID -ne ""){$aduser|Set-ADUser -EmployeeID $ADPUser.employeeID}
-		if($ADPUser.jobtitle -ne $null -and $ADPUser.jobtitle -ne ""){$aduser|Set-ADUser -Title $ADPUser.jobtitle}
-		if($ADPUser.jobtitle -ne $null -and $ADPUser.jobtitle -ne ""){$aduser|Where-Object{$_.description -inotlike "*Service*"}|Set-ADUser -Description $ADPUser.jobtitle}
+		if($ADPUser."Work Contact: Work Mobile" -ne $null -and $ADPUser."Work Contact: Work Mobile" -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Mobile Number Updated -Original:"+$aduser.MobilePhone+" -New:"+$ADPUser."Work Contact: Work Mobile"
+			$aduser|Set-ADUser -MobilePhone $ADPUser."Work Contact: Work Mobile"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser."Work Contact: Work Phone" -ne $null -and $ADPUser."Work Contact: Work Phone" -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Office Number Updated -Original:"+$aduser.OfficePhone+" -New:"+$ADPUser."Work Contact: Work Phone"
+			$aduser|Set-ADUser -OfficePhone $ADPUser."Work Contact: Work Phone"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser.DeptNumber -ne $null -and $ADPUser.DeptNumber -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Department Number Updated -Original:"+$aduser.department+" -New:"+$deptlookup[$ADPUser.DeptNumber.trim()]			
+			$aduser|Set-ADUser -department $deptlookup[$ADPUser.DeptNumber.trim()]
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null		
+		}
+        if($ADPUser."Location Address Line 1" -eq $null -or $ADPUser."Location Address Line 1" -eq "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Street Address Updated -Original:"+$aduser.StreetAddress+" -New:REMOTE"			
+			$aduser|Set-ADUser -StreetAddress "REMOTE"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Office Updated -Original:"+$aduser.Office+" -New:REMOTE"
+			$aduser|Set-ADUser -Office "REMOTE"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - City Updated -Original:"+$aduser.City+" -New:NULL"
+			$aduser|Set-ADUser -City $null
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Zip Updated -Original:"+$aduser.PostalCode+" -New:NULL"
+			$aduser|Set-ADUser -PostalCode $null
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - State Updated -Original:"+$aduser.State+" -New:NULL"
+			$aduser|Set-ADUser -State $null
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+        if($ADPUser."Location Address Line 1" -ne $null -and $ADPUser."Location Address Line 1" -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Office Updated -Original:"+$aduser.Office+" -New:"+$ADPUser."Location Description"
+			$aduser|Set-ADUser -Office $ADPUser."Location Description"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Street Address Updated -Original:"+$aduser.StreetAddress+" -New:"+$ADPUser."Location Address Line 1"
+			$aduser|Set-ADUser -StreetAddress $ADPUser."Location Address Line 1"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser."Location City" -ne $null -and $ADPUser."Location City" -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - City Updated -Original:"+$aduser.City+" -New:"+$ADPUser."Location City"
+			$aduser|Set-ADUser -City $ADPUser."Location City"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser."Location Postal Code" -ne $null -and $ADPUser."Location Postal Code" -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Zip Updated -Original:"+$aduser.PostalCode+" -New:"+$ADPUser."Location Postal Code"
+			$aduser|Set-ADUser -PostalCode $ADPUser."Location Postal Code"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser."Location State/Territory" -ne $null -and $ADPUser."Location State/Territory" -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - State Updated -Original:"+$aduser.State+" -New:"+$ADPUser."Location State/Territory"
+			$aduser|Set-ADUser -State $ADPUser."Location State/Territory"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser.employeeID -ne $null -and $ADPUser.employeeID -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - State Updated -Original:"+$aduser.EmployeeID+" -New:"+$ADPUser.employeeID
+			$aduser|Set-ADUser -EmployeeID $ADPUser.employeeID
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		if($ADPUser.jobtitle -ne $null -and $ADPUser.jobtitle -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - JobTitle Updated -Original:"+$aduser.Title+" -New:"+$ADPUser.jobtitle
+			$aduser|Set-ADUser -Title $ADPUser.jobtitle
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Description Updated -Original:"+$aduser.Description+" -New:"+$ADPUser.jobtitle
+			$aduser|Where-Object{$_.description -inotlike "*Service*"}|Set-ADUser -Description $ADPUser.jobtitle
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null		
+		}
+		$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+		$logline = "`n"+$timestamp+" - Success: "+$adpname+" Service Account - Description Updated -Original:"+$aduser.Description+" -New:$ADPfn $adpln Service Account"
     	$aduser|Where-Object{$_.UserPrincipalName -like "*Service*"}|Set-ADUser -Description ("$ADPfn $adpln Service Account")
+		$timestamp = $null
+		$logline = $null
 		if($ADPUser.SupervisorName -ne $null -and $ADPUser.SupervisorName -ne "")
 		{
 			$mgr = $ADPUser.SupervisorName
@@ -152,6 +270,7 @@ FOREACH($ADPUser in $ADPUsers)
 	$ADPuser = $null
     $adpln = $null
     $adpfn = $null
+	$adpname = $null
     $email = $null
     $mgr = $null
     $mgrfn = $null
