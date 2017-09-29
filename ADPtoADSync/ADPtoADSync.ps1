@@ -227,9 +227,12 @@ FOREACH($ADPUser in $ADPUsers)
 			$timestamp = $null
 			$logline = $null		
 		}
-		$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
-		$logline = "`n"+$timestamp+" - Success: "+$adpname+" Service Account - Description Updated -Original:"+$aduser.Description+" -New:$ADPfn $adpln Service Account"
     	$aduser|Where-Object{$_.UserPrincipalName -like "*Service*"}|Set-ADUser -Description ("$ADPfn $adpln Service Account")
+		IF(($aduser|Where-Object{$_.UserPrincipalName -like "*Service*"}).UserPrincipalName -like "*Service*"){
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" Service Account - Description Updated -Original:"+$aduser.Description+" -New:$ADPfn $adpln Service Account"
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+		}
 		$timestamp = $null
 		$logline = $null
 		if($ADPUser.SupervisorName -ne $null -and $ADPUser.SupervisorName -ne "")
@@ -252,7 +255,22 @@ FOREACH($ADPUser in $ADPUsers)
                 $mgremail = (($mgrfn[0]+$mgrln+"@belltechlogix.com").ToLower()).trim()
                 $Manager = Get-ADuser -Filter {emailaddress -like $mgremail}
 			}
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" - Manager Updated -Original:"+($aduser.Manager|out-string).split(",")[0].substring(3)+" -New:"+$Manager.name
             $aduser|Set-ADUser -Manager $Manager
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
+		}
+		$svcaccount = $aduser|Where-Object{$_.UserPrincipalName -like "*Service*"}
+		IF($svcaccount -ne $null -and $svcaccount -ne "")
+		{
+			$timestamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+			$logline = "`n"+$timestamp+" - Success: "+$adpname+" Service Account - Manager Removed -Original:"+($aduser.Manager|out-string).split(",")[0].substring(3)+" -New:Null"
+			$svcaccount|Set-ADUser -Manager $null
+			Add-Content ($ADPFile.PSParentPath+"\adpimport.log") $logline
+			$timestamp = $null
+			$logline = $null
 		}
 	}
 
@@ -278,4 +296,5 @@ FOREACH($ADPUser in $ADPUsers)
     $mgrname = $null
 	$mgremail = $null
 	$adpemail = $null
+	$svcaccount = $null
 }
