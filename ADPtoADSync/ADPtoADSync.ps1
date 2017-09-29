@@ -262,6 +262,7 @@ FOREACH($ADPUser in $ADPUsers)
 			$timestamp = $null
 			$logline = $null
 		}
+		#Remove manager for service accounts so they don't show up in the GAL
 		$svcaccount = $aduser|Where-Object{$_.UserPrincipalName -like "*Service*"}
 		IF($svcaccount -ne $null -and $svcaccount -ne "")
 		{
