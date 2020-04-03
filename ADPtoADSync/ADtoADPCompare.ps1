@@ -1,9 +1,16 @@
 ﻿# ADPtoADPCompare.ps1
 # Created by Kristopher Roy
+# Created Sept 01 2007
+# Modified April 03 2020
 # Script purpose - compare ADP output details back to AD prior to any writing changes
+
+#csv file output/dump from ADP
 $adpinput = import-csv C:\Belltech\ADPOutput_09_22_17.csv
+
+#AD Get
 $ADusers = get-aduser -filter * -Properties userprincipalname,department,sn,MobilePhone,OfficePhone,City,postalCode,state,street,employeeID,mail,title,manager,description|select UserPrincipalName,givenName,sn,mail,department,MobilePhone,OfficePhone,City,postalCode,state,street,employeeID,title,manager,description,ADPName,NoADPMatch
 
+#loop Compare AD and ADP
 FOREACH($USER in $ADUSers)
 {
     $adpuser = $adpinput|where{($_."Work Contact: Work Email").trim() -eq $user.mail}

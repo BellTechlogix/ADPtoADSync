@@ -1,6 +1,8 @@
 ﻿#
 # ADPtoADSync.ps1
 # Created by Kristopher Roy
+# Created Sept 01 2007
+# Modified April 03 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
