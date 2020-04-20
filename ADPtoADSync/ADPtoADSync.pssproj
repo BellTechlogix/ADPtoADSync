@@ -27,6 +27,7 @@
   </PropertyGroup>
   <ItemGroup />
   <ItemGroup>
+    <Compile Include="ADP-New-ADUser.ps1" />
     <Compile Include="ADPtoADSync.ps1" />
     <Compile Include="ADtoADPCompare.ps1" />
   </ItemGroup>
