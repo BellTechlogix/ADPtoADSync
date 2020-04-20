@@ -2,7 +2,7 @@
 # ADPtoADSync.ps1
 # Created by Kristopher Roy
 # Created Sept 01 2007
-# Modified April 03 2020
+# Modified April 20 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
@@ -30,11 +30,12 @@
 #>
 
 #definition for department codes
-$deptlookup = @{'710' = "710 - BI Corp Administration";'11002' = "11002 - Epson Depot";'11007' = "11007 - Epson Depot - HR";'14002' = "14002 - Altria Tech Services";'15102' = "15102 - Asset Management Services";
-	'15402' = "15402 - HII Services";'20202' = "20202 - TLC Indiana";'20502' = "20502 - TLC Virgina";'21102' = "21102 - USF Services";'30502' = "30502 - Deskside Services";'55002' = "55002 - Service Desk";
-	'55005' = "55005 - Service Desk - Mgmt";'60005' = "60005 - Management";'61002' = "61002 - Project Management";'70003' = "70003 - Product - Operations";'74502' = "74502 - Engineering - Tech Ops";
-	'75002' = "75002 - Engineering - Projects";'75005' = "75005 - Engineering - Mgmt";'75502' = "75502 - Mobility Solutions";'75505' = "75505 - Mobility Solutions - Mgmt";'77002' = "77002 - Service Delivery Management";
-	'79008' = "79008 - Marketing";'79504' = "79504 - Sales - Business Development";'90006' = "90006 - Headquarters - Accounting";'90007' = "90007 - Headquarters - HR";'92509' = "92509 - Headquarters - IT"}
+$deptlookup = @{'710' = "710 - Corp Administration";'720' = "720 - Corp Finance";'740' = "740 - Corp Human Resources";'11002' = "11002 - Epson Depot";'11007' = "11007 - Epson Depot - HR";'14002' = "14002 - Altria - TLP";'15102' = "15102 - Asset Management Services";
+	'15402' = "15402 - HII Services";'20202' = "20202 - Indiana Depot";'20502' = "20502 - Virgina Depot";'21102' = "21102 - USF Services";'30502' = "30502 - Deskside Services";'55002' = "55002 - Service Desk";
+	'55005' = "55005 - Service Desk - Management";'55102' = "55102 - Service Desk Operations";'55202' = "55202 - Service Improvement";'55502' = "55502 - EUS Technology and Automation";'60005' = "60005 - Management";'61002' = "61002 - Project Management";
+    '70003' = "70003 - Product - Operations";'74502' = "74502 - Engineering - Tech Ops";'75002' = "75002 - Engineering - Projects";'75005' = "75005 - Engineering - Mgmt";'75502' = "75502 - Mobility Services";
+    '75505' = "75505 - Mobility Services Mgmt";'77002' = "77002 - Service Delivery Management";'79008' = "79008 - Marketing";'79504' = "79504 - Sales - Business Development";'90006' = "90006 - Headquarters - Accounting";
+    '90007' = "90007 - Headquarters - HR";'92509' = "92509 - Headquarters - IT"}
 
 #File Select Function
 function Get-FileName
