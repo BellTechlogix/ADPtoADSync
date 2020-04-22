@@ -48,7 +48,7 @@ function Get-FileName
       [Parameter(Mandatory=$False)]
       [string]$Title = "Select A File"
     )
-   if(!($Title)) { $Title="Select Input File"} ## why not a default like i showed?
+   if(!($Title)) { $Title="Select Input File"}
   
 	[System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
 	$OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog

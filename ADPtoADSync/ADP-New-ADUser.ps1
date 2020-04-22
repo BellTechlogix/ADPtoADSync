@@ -73,12 +73,18 @@ FOREACH($user in $userlist)
             {}
             ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $secondusername} -ErrorAction SilentlyContinue) -eq $false)
             {
-                "        Username:"+$secondusername+ " Available, creating account"|Add-Content $log
+                "        Username:"+$secondusername+ " Available, creating account:"|Add-Content $log
+                #creating account based upon first initial+middle initial+last name
+                New-ADUser -SamAccountName $secondusername -Name ($user.adpfn+" "+$user.adpln ) -Surname $user.adpln -GivenName $user.adpfn -EmployeeNumber $user."Associate ID" -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf|out-file $log -Append
+				Start-Sleep -Seconds 30
             }
         }
         ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $initusername} -ErrorAction SilentlyContinue) -eq $false)
         {
-            "        Username:"+$initusername+ " Available, creating account"|Add-Content $log
+            "        Username:"+$initusername+ " Available, creating account:"|Add-Content $log
+            #creating account based upon first initial+last name
+            New-ADUser -SamAccountName $initusername -Surname $user.adpln -GivenName $user.adpfn -EmployeeNumber $user."Associate ID" -WhatIf|Add-Content $log
+			Start-Sleep -Seconds 30
         }
 	}
     ELSEIF($aduser -ne $null)
