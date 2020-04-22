@@ -3,7 +3,7 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified April 20 2020
+# Modified April 22 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
