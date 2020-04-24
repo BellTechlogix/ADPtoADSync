@@ -7,11 +7,11 @@
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
-$sourcedir = "\\BTL-DC-FTP01\c$\FTP\"
-$sourcefile = "AD Pull - Users Created Today.csv"
+$sourcedir = "\\Btl-dc-ftp01\adp\"
+$sourcefile = "receive\AD Pull - Users Created Today.csv"
 $date = get-date -Format "yyy-MM-dd"
 $timestamp = get-date -Format "yyyy-MM-dd (%H:mm:ss)"
-$archivedir = $sourcedir+"archived\NewUsers"
+$archivedir = $sourcedir+"archive"
 #hrmail recipients for sending report
 $hrrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
 #hdmail recipients for sending report
@@ -97,187 +97,240 @@ $mbdblookup = @{
 }
 
 #import the source file for new users from ADP
-$userlist = Import-Csv $sourcedir$sourcefile|select *
+TRY{$userlist = Import-Csv $sourcedir$sourcefile|select *}CATCH{$userlist = $null}
+IF($userlist -ne $null)
+{
+    #for testing
+    #$user = $userlist|where{$_."Associate ID" -eq "2TPN84ARF77"}
 
-#for testing
-#$user = $userlist|where{$_."Associate ID" -eq "2TPN849999"}
-
-#loop through each user verify ID doesn't exist then create user
-FOREACH($user in $userlist)
-{  
-    #create userlog
-    $ADcreatelog = $user."First Name"+"."+$user."Last Name"+(get-date -Format "yyyy-MM-dd-%H-mm-ss")+".log"
-    $log = "$sourcedir$ADcreatelog"
-    if (!(Test-Path "$log"))
-    {
-       New-Item -path $sourcedir -type "file" -name $ADcreatelog
-       Write-Host "Created new logfile $ADcreatelog"
-    }
-    else
-    {
-      Write-Host "Logfile already exists and new text content added"
-    }
+    #loop through each user verify ID doesn't exist then create user
+    FOREACH($user in $userlist)
+    {  
+        #create userlog
+        $ADcreatelog = $user."First Name"+"."+$user."Last Name"+(get-date -Format "yyyy-MM-dd-%H-mm-ss")+".log"
+        $log = "$sourcedir$ADcreatelog"
+        if (!(Test-Path "$log"))
+        {
+           TRY{New-Item -path $sourcedir -type "file" -name $ADcreatelog}CATCH{New-Item -path $sourcedir -type "file" -name "unknownuser"+(get-date -Format "yyyy-MM-dd-%H-mm-ss")+".log"}
+           Write-Host "Created new logfile $ADcreatelog"
+        }
+        else
+        {
+          Write-Host "Logfile already exists and new text content added"
+        }
 
 
-    #write to log
-    $timestamp|Add-Content $log
-    "   "+$user."Payroll Name"|Add-Content $log
+        #write to log
+        $timestamp|Add-Content $log
+        "   "+$user."Payroll Name"|Add-Content $log
+        "   "+$user."Associate ID"|Add-Content $log
+        "   "+$user."First Name"+" "+$user."Last Name"|Add-Content $log
 
-    #get Managers AD Account
-    $managerID = $user."Reports To Associate ID"
-    $manager = get-aduser -filter 'employeenumber -like $managerID' -ErrorAction SilentlyContinue
+	    #set ID
+	    $ID = $user."Associate ID"
+
+	    #Check for missing fields
+	    $missingmsg = "missing from source ADP, halting creation and mailing HR"
+	    IF($user."First Name" -eq $null -or $user."First Name" -eq ""){"   First Name $missingmsg"|Add-Content $log
+		    $missing = 'True'
+		    $failcode = "Missing Firstname "}
+	    IF($user."Last Name" -eq $null -or $user."Last Name" -eq ""){"   Last Name $missingmsg"|Add-Content $log
+		    $missing = 'True'
+		    $failcode += "Missing Last Name "
+	    }
+	    IF($user."Associate ID" -eq $null -or $user."Associate ID" -eq ""){"   Associate ID $missingmsg"|Add-Content $log
+		    $missing = 'True'
+		    $failcode += "Missing Associate ID "
+	    }
+        IF($user."Home Department Code" -eq $null -or $user."Home Department Code" -eq ""){"   Home Department Code $missingmsg"|Add-Content $log
+		    $missing = 'True'
+		    $failcode += "Missing Home Department Code "
+	    }
+        IF($user.'Job Title Description' -eq $null -or $user.'Job Title Description' -eq ""){"   Job Title Description $missingmsg"|Add-Content $log
+		    $missing = 'True'
+		    $failcode += "Job Title Description "
+	    }
+        IF($user.'Location Code' -eq $null -or $user.'Location Code' -eq ""){"   Location Code $missingmsg"|Add-Content $log
+		    $missing = 'True'
+		    $failcode += "Location Code "
+	    }
+    
+	    If($missing -ne 'True')
+	    {
+		    #get Managers AD Account
+		    $managerID = $user."Reports To Associate ID"
+		    $manager = get-aduser -filter 'employeenumber -like $managerID' -ErrorAction SilentlyContinue
     
 	
-    #Check that employee ID doesn't exist then create user account
-    $ID = $user."Associate ID"
-    $aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber
-	If($aduser -eq $null)
-	{
-		"     Creating New User:"|Add-Content $log
-		"        "+$user."Last Name"+", "+$user."First Name"|Add-Content $log
-        $lnamecount = [Math]::Min($user."Last Name".Length, 18)
-        $initusername = ($user."First Name".substring(0,1)+$user."Last Name".substring(0,$lnamecount))
-        "        Checking Username Availability:"+$initusername|Add-Content $log
-        IF([bool](get-aduser -Filter{SamAccountName -eq $initusername} -ErrorAction SilentlyContinue) -eq $true)
-        {
-            IF($lnamecount -gt 17){$lnamecount = $lnamecount - 1}
-            $ErrorActionPreference = 'stop'
-            try{$secondusername = ($user."First Name".substring(0,1)+$user."Middle Initial".substring(0,1)+$user."Last Name".substring(0,$lnamecount))}
-			catch{$secondusername = ($user."First Name".substring(0,1)+$user."First Name".substring(1,2)+$user."Last Name".substring(0,$lnamecount))}
-            $ErrorActionPreference = 'continue'
-            "        "+$initusername+" already exists attempting "+$secondusername|Add-Content $log
+		    #Check that employee ID doesn't exist then create user account
+		    $aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber
+		    If($aduser -eq $null)
+		    {
+			    "     Creating New User:"|Add-Content $log
+			    "        "+$user."Last Name"+", "+$user."First Name"|Add-Content $log
+			    $lnamecount = [Math]::Min($user."Last Name".Length, 18)
+			    $initusername = ($user."First Name".substring(0,1)+$user."Last Name".substring(0,$lnamecount))
+			    "        Checking Username Availability:"+$initusername|Add-Content $log
+			    IF([bool](get-aduser -Filter{SamAccountName -eq $initusername} -ErrorAction SilentlyContinue) -eq $true)
+			    {
+				    IF($lnamecount -gt 17){$lnamecount = $lnamecount - 1}
+				    $ErrorActionPreference = 'stop'
+				    try{$secondusername = ($user."First Name".substring(0,1)+$user."Middle Initial".substring(0,1)+$user."Last Name".substring(0,$lnamecount))}
+				    catch{$secondusername = ($user."First Name".substring(0,1)+$user."First Name".substring(1,2)+$user."Last Name".substring(0,$lnamecount))}
+				    $ErrorActionPreference = 'continue'
+				    "        "+$initusername+" already exists attempting "+$secondusername|Add-Content $log
             
-            #check if secondary user name attempt already exists
-            IF([bool](get-aduser -Filter{SamAccountName -eq $secondusername} -ErrorAction SilentlyContinue) -eq $true)
-            {
-                #Send email to helpdesk for no available account names
-                $htmlforHDFailEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Fail</span></h1>"
-                $htmlforHDFailEmail = $htmlforHDFailEmail + "<h2 style='color: #2e6c80;'>User Account Names Unavailable for Employee: <span style='color: #000000;'>$ID</span></h2>"
-                $htmlforHDFailEmail = $htmlforHDFailEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
-                $htmlforHDFailEmail = $htmlforHDFailEmail + "<h2 style='color: #2e6c80;'>ADUSER Accounts tried:&nbsp;<span style='color: #000000;'>"+$initusername+", "+$secondusername+"</span></h2>"
-                $htmlforHDFailEmail = $htmlforHDFailEmail +  "<h4><span style='color: #000000;'>Please find available user ID then create account and mailbox</span></h4>"
-                "        Usernames:"+$initusername+", "+$secondusername+" already exist, forwarding to ServiceDesk@belltechlogix.com"|Add-Content $log
-                Send-MailMessage -from $from -to $hdrecipients -subject "BTL No Available UserID for Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDFailEmail -Attachments $log
+				    #check if secondary user name attempt already exists
+				    IF([bool](get-aduser -Filter{SamAccountName -eq $secondusername} -ErrorAction SilentlyContinue) -eq $true)
+				    {
+					    #Send email to helpdesk for no available account names
+					    $htmlforHDFailEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Fail</span></h1>"
+					    $htmlforHDFailEmail = $htmlforHDFailEmail + "<h2 style='color: #2e6c80;'>User Account Names Unavailable for Employee: <span style='color: #000000;'>$ID</span></h2>"
+					    $htmlforHDFailEmail = $htmlforHDFailEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
+					    $htmlforHDFailEmail = $htmlforHDFailEmail + "<h2 style='color: #2e6c80;'>ADUSER Accounts tried:&nbsp;<span style='color: #000000;'>"+$initusername+", "+$secondusername+"</span></h2>"
+					    $htmlforHDFailEmail = $htmlforHDFailEmail +  "<h4><span style='color: #000000;'>Please find available user ID then create account and mailbox</span></h4>"
+					    "        Usernames:"+$initusername+", "+$secondusername+" already exist, forwarding to ServiceDesk@belltechlogix.com"|Add-Content $log
+					    Send-MailMessage -from $from -to $hdrecipients -subject "BTL No Available UserID for Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDFailEmail -Attachments $log
             
-            }
-            ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $secondusername} -ErrorAction SilentlyContinue) -eq $false)
-            {
-                "        Username:"+$secondusername+ " Available, creating account:"|Add-Content $log
-                #creating account based upon first initial+middle initial+last name
-                New-ADUser -SamAccountName $secondusername `
-                -UserPrincipalName ($secondusername+"@belltechlogix.com") `
-                -Name ($user."First Name"+" "+$user."Last Name" ) `
-                -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
-                -Surname $user."Last Name" -GivenName $user."First Name" `
-                -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" `
-                -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
-                -Manager $manager.SamAccountName -Title $user.'Job Title Description' `
-                -Office $user.'Location Code' -StreetAddress $user.'Location Description' `
-                -OfficePhone $user.'Work Contact: Work Phone' `
-                -MobilePhone $user.'Personal Contact: Personal Mobile' `
-                -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
-                -Enabled 1 -PasswordNotRequired 1 `
-                -ErrorAction Continue|Add-Content $log			
+				    }
+				    ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $secondusername} -ErrorAction SilentlyContinue) -eq $false)
+				    {
+					    "        Username:"+$secondusername+ " Available, creating account:"|Add-Content $log
+					    #creating account based upon first initial+middle initial+last name
+					    New-ADUser -SamAccountName $secondusername `
+					    -UserPrincipalName ($secondusername+"@belltechlogix.com") `
+					    -Name ($user."First Name"+" "+$user."Last Name" ) `
+					    -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+					    -Surname $user."Last Name" -GivenName $user."First Name" `
+					    -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" `
+					    -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
+					    -Manager $manager.SamAccountName -Title $user.'Job Title Description' `
+					    -Office $user.'Location Code' -StreetAddress $user.'Location Description' `
+					    -OfficePhone $user.'Work Contact: Work Phone' `
+					    -MobilePhone $user.'Personal Contact: Personal Mobile' `
+					    -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
+					    -Enabled 1 -PasswordNotRequired 1 `
+					    -ErrorAction Continue|Add-Content $log			
                 
-                Add-Content $log -Value "        simulated account created $secondusername"
-                Add-Content $log -Value "        waiting 30s before creating mailbox $secondusername"
-                Start-Sleep -Seconds 30
-                Add-Content $log -Value "        creating mailbox for $secondusername"
-                
-                #try and create mailbox
-                $ErrorActionPreference = 'stop'        
-    			try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-                catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
-				$ErrorActionPreference = 'continue'
+					    Add-Content $log -Value "        simulated account created $secondusername"
+					    Add-Content $log -Value "        waiting 30s before creating mailbox $secondusername"
+					    Start-Sleep -Seconds 30
+                                
+					    #try and create mailbox
+					    Add-Content $log -Value "        creating mailbox for $secondusername"
+					    $ErrorActionPreference = 'stop'        
+    				    try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
+					    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+					    $ErrorActionPreference = 'continue'
 
-                #Send email to helpdesk for succesful account creation with secondary username
-                $htmlforHDsecondsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
-                $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
-                $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
-                $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$secondusername+"</span></h2>"
-                $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
-                "        Usernames:"+$secondusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
-                Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDsecondsuccessEmail -Attachments $log
+					    #Send email to helpdesk for succesful account creation with secondary username
+					    $htmlforHDsecondsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
+					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
+					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
+					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$secondusername+"</span></h2>"
+					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
+					    "        Usernames:"+$secondusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
+					    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDsecondsuccessEmail -Attachments $log
                 
-                #clear html 
-                $htmlforHDsecondsuccessEmail = $null
+					    #clear html 
+					    $htmlforHDsecondsuccessEmail = $null
             
-            }
-        }
-        ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $initusername} -ErrorAction SilentlyContinue) -eq $false)
-        {
-            "        Username:"+$initusername+ " Available, creating account:"|Add-Content $log
+				    }
+			    }
+			    ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $initusername} -ErrorAction SilentlyContinue) -eq $false)
+			    {
+				    "        Username:"+$initusername+ " Available, creating account:"|Add-Content $log
             
-            #creating account based upon first initial+last name
-            New-ADUser -SamAccountName $initusername `
-            -UserPrincipalName ($initusername+"@belltechlogix.com") `
-            -Name ($user."First Name"+" "+$user."Last Name" )  `
-            -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
-            -Surname $user."Last Name" `
-            -GivenName $user."First Name" `
-            -Initials $user.'Middle Initial' `
-            -EmployeeNumber $user."Associate ID" `
-            -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
-            -Manager $manager.SamAccountName `
-            -Title $user.'Job Title Description' `
-            -Office $user.'Location Code' `
-            -StreetAddress $user.'Location Description' `
-            -OfficePhone $user.'Work Contact: Work Phone' `
-            -MobilePhone $user.'Personal Contact: Personal Mobile' `
-            -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
-            -Enabled 1 -PasswordNotRequired 1 `
-            -ErrorAction Continue|Add-Content $log
+				    #creating account based upon first initial+last name
+				    New-ADUser -SamAccountName $initusername `
+				    -UserPrincipalName ($initusername+"@belltechlogix.com") `
+				    -Name ($user."First Name"+" "+$user."Last Name" )  `
+				    -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+				    -Surname $user."Last Name" `
+				    -GivenName $user."First Name" `
+				    -Initials $user.'Middle Initial' `
+				    -EmployeeNumber $user."Associate ID" `
+				    -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
+				    -Manager $manager.SamAccountName `
+				    -Title $user.'Job Title Description' `
+				    -Office $user.'Location Code' `
+				    -StreetAddress $user.'Location Description' `
+				    -OfficePhone $user.'Work Contact: Work Phone' `
+				    -MobilePhone $user.'Personal Contact: Personal Mobile' `
+				    -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
+				    -Enabled 1 -PasswordNotRequired 1 `
+				    -ErrorAction Continue|Add-Content $log
 
-            Add-Content $log -Value "        account created $initusername"			
-            Start-Sleep -Seconds 30
-			Add-Content $log -Value "        creating mailbox for $initusername"
+				    Add-Content $log -Value "        account created $initusername"			
+				    Start-Sleep -Seconds 30
+			
+				    #try and create mailbox
+				    Add-Content $log -Value "        creating mailbox for $initusername"
+				    $ErrorActionPreference = 'stop'        
+    			    try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
+				    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+				    $ErrorActionPreference = 'continue'
 
-            #try and create mailbox
-            $ErrorActionPreference = 'stop'        
-    		try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-            catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
-			$ErrorActionPreference = 'continue'
-
-            #Send email to helpdesk for succesful account creation with initial username
-            $htmlforHDInitialsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
-            $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
-            $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
-            $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$initusername+"</span></h2>"
-            $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
-            "        Usernames:"+$HDInitialusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
-            Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDInitialsuccessEmail -Attachments $log
+				    #Send email to helpdesk for succesful account creation with initial username
+				    $htmlforHDInitialsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
+				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
+				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
+				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$initusername+"</span></h2>"
+				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
+				    "        Usernames:"+$HDInitialusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
+				    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDInitialsuccessEmail -Attachments $log
                 
-            #clear html 
-            $htmlforHDInitialsuccessEmail = $null
-        }
-	}
-    ELSEIF($aduser -ne $null)
-    {
+				    #clear html 
+				    $htmlforHDInitialsuccessEmail = $null
+			    }
+		    }
+		    ELSEIF($aduser -ne $null)
+		    {
         
-        $htmlforHREmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Fail</span></h1>"
-        $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>Duplicate Employee Number: <span style='color: #000000;'>$ID</span></h2>"
-        $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>ADUSER:&nbsp;<span style='color: #000000;'>"+$ADUSER.SamAccountName+"</span></h2>"
-        $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
-        $htmlforHREmail = $htmlforHREmail + "<h4><span style='color: #000000;'>Please Resolve User ID duplicate and contact the helpdesk for account creation</span></h4>"
+			    #Send email to HR for User ID duplicate
+			    $htmlforHREmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Fail</span></h1>"
+			    $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>Duplicate Employee Number: <span style='color: #000000;'>$ID</span></h2>"
+			    $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>ADUSER:&nbsp;<span style='color: #000000;'>"+$ADUSER.SamAccountName+"</span></h2>"
+			    $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
+			    $htmlforHREmail = $htmlforHREmail + "<h4><span style='color: #000000;'>Please Resolve User ID duplicate and contact the helpdesk for account creation</span></h4>"
 
-
-
-        "        Username:"+$aduser.SamAccountName+" with employeID:"+$aduser.employeenumber+" already exists, forwarding to HumanResources@belltechlogix.com"|add-content $log
-        Send-MailMessage -from $from -to $hrrecipients -subject "BTL Pre-Existing employee ID" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log
-    }
-    #Move User log file
-    move-item $log -Destination $archivedir
+			    "        Username:"+$aduser.SamAccountName+" with employeID:"+$aduser.employeenumber+" already exists, forwarding to HumanResources@belltechlogix.com"|add-content $log
+			    Send-MailMessage -from $from -to $hrrecipients -subject "BTL Pre-Existing employee ID" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log
+			    $htmlforHREmail = $null
+		    }
     
-    #clear variables for loop iteration
-    $ADcreatelog = $null
-    $log = $null
-    $user = $null
-    $aduser = $null
-    $manager = $null
-    $managerID = $null
-}
+	    }
+	    ElseIf($missing -eq 'True')
+	    {
+	        
+		    #Send email to HR for required ADP field missing
+		    $htmlforHREmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Fail</span></h1>"
+		    $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>ADP Field Missing For: <span style='color: #000000;'>$ID</span></h2>"
+		    $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
+		    $htmlforHREmail = $htmlforHREmail + "<h4><span style='color: #000000;'>Please Resolve $failcode</span></h4>"
 
-#move source file to archive
-$archivefilename = "ADP-NewUsers-"+(get-date -Format "yyyy-MM-dd-%H-mm-ss")+".csv"
-Rename-Item $sourcedir$sourcefile -NewName $archivefilename
-Move-Item $sourcedir$archivefilename -Destination $archivedir
+		    "        $failcode, forwarding to HumanResources@belltechlogix.com"|add-content $log
+		    Send-MailMessage -from $from -to $hrrecipients -subject "BTL ADP Fields Missing" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log
+		    $htmlforHREmail = $null
+		    $failcode = $null
+	    }
+		    #Move User log file
+		    move-item $log -Destination "$archivedir\NewUsers"
+
+            #clear variables for loop iteration
+            $missing = $null
+            $failcode = $null
+		    $ADcreatelog = $null
+		    $log = $null
+		    $user = $null
+		    $aduser = $null
+		    $manager = $null
+		    $managerID = $null
+            Start-Sleep -Seconds 2
+    }
+    #move source file to archive
+    $archivefilename = "ADP-NewUsers-"+(get-date -Format "yyyy-MM-dd-%H-mm-ss")+".csv"
+    Rename-Item $sourcedir$sourcefile -NewName $archivefilename
+    Move-Item $sourcedir"receive\"$archivefilename -Destination $archivedir
+}
+$userlist = $null
