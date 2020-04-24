@@ -175,7 +175,7 @@ FOREACH($user in $userlist)
                 #try and create mailbox
                 $ErrorActionPreference = 'stop'        
     			try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-                catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+                catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 				$ErrorActionPreference = 'continue'
 
                 #Send email to helpdesk for succesful account creation with secondary username
@@ -205,7 +205,7 @@ FOREACH($user in $userlist)
             #try and create mailbox
             $ErrorActionPreference = 'stop'        
     		try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-            catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+            catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 			$ErrorActionPreference = 'continue'
 
             #Send email to helpdesk for succesful account creation with initial username
