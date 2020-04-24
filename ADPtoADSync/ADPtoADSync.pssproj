@@ -29,7 +29,8 @@
   <ItemGroup>
     <Compile Include="ADP-Get.ps1" />
     <Compile Include="ADP-New-ADUser.ps1" />
-    <Compile Include="ADPtoADSync.ps1" />
+    <Compile Include="ADPtoAD-Changes.ps1" />
+    <Compile Include="ADPtoADSync-Deprecated.ps1" />
     <Compile Include="ADtoADPCompare.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

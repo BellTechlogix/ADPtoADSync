@@ -3,7 +3,7 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified April 23 2020
+# Modified April 24 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
@@ -11,7 +11,7 @@ $sourcedir = "\\BTL-DC-FTP01\c$\FTP\"
 $sourcefile = "AD Pull - Users Created Today.csv"
 $date = get-date -Format "yyy-MM-dd"
 $timestamp = get-date -Format "yyyy-MM-dd (%H:mm:ss)"
-$archivedir = $sourcedir+"archived"
+$archivedir = $sourcedir+"archived\NewUsers"
 #hrmail recipients for sending report
 $hrrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
 #hdmail recipients for sending report

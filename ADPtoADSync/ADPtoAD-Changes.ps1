@@ -1,8 +1,8 @@
-﻿#
-# ADPtoADSync.ps1
+#
+# ADPtoAD-Changes.ps1
 # Created by Kristopher Roy
-# Created Sept 01 2017
-# Modified April 20 2020
+# Created April 24 2020
+# Modified April 24 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
@@ -29,13 +29,55 @@
 	title = Job Title
 #>
 
+#Source Variables
+$sourcedir = "\\BTL-DC-FTP01\c$\FTP\"
+$sourcefile = "AD Pull - Users Updated Today.csv"
+$date = get-date -Format "yyy-MM-dd"
+$timestamp = get-date -Format "yyyy-MM-dd (%H:mm:ss)"
+$archivedir = $sourcedir+"archived\UpdatedUsers"
+#hrmail recipients for sending report
+$hrrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
+#hdmail recipients for sending report
+$hdrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
+#from address
+$from = "BTL-AccountCreation@belltechlogix.com"
+#smtpserver
+$smtp = "smtp.belltechlogix.com"
+
 #definition for department codes
-$deptlookup = @{'710' = "710 - Corp Administration";'720' = "720 - Corp Finance";'740' = "740 - Corp Human Resources";'11002' = "11002 - Epson Depot";'11007' = "11007 - Epson Depot - HR";'14002' = "14002 - Altria - TLP";'15102' = "15102 - Asset Management Services";
-	'15402' = "15402 - HII Services";'20202' = "20202 - Indiana Depot";'20502' = "20502 - Virgina Depot";'21102' = "21102 - USF Services";'30502' = "30502 - Deskside Services";'55002' = "55002 - Service Desk";
-	'55005' = "55005 - Service Desk - Management";'55102' = "55102 - Service Desk Operations";'55202' = "55202 - Service Improvement";'55502' = "55502 - EUS Technology and Automation";'60005' = "60005 - Management";'61002' = "61002 - Project Management";
-    '70003' = "70003 - Product - Operations";'74502' = "74502 - Engineering - Tech Ops";'75002' = "75002 - Engineering - Projects";'75005' = "75005 - Engineering - Mgmt";'75502' = "75502 - Mobility Services";
-    '75505' = "75505 - Mobility Services Mgmt";'77002' = "77002 - Service Delivery Management";'79008' = "79008 - Marketing";'79504' = "79504 - Sales - Business Development";'90006' = "90006 - Headquarters - Accounting";
-    '90007' = "90007 - Headquarters - HR";'92509' = "92509 - Headquarters - IT"}
+$deptlookup = @{
+    '710' = "710 - Corp Administration";
+    '720' = "720 - Corp Finance";
+    '740' = "740 - Corp Human Resources";
+    '11002' = "11002 - Epson Depot";
+    '11007' = "11007 - Epson Depot - HR";
+    '14002' = "14002 - Altria - TLP";
+    '15102' = "15102 - Asset Management Services";
+	'15402' = "15402 - HII Services";
+    '20202' = "20202 - Indiana Depot";
+    '20502' = "20502 - Virgina Depot";
+    '21102' = "21102 - USF Services";
+    '30502' = "30502 - Deskside Services";
+    '55002' = "55002 - Service Desk";
+	'55005' = "55005 - Service Desk - Management";
+    '55102' = "55102 - Service Desk Operations";
+    '55202' = "55202 - Service Improvement";
+    '55502' = "55502 - EUS Technology and Automation";
+    '60005' = "60005 - Management";
+    '61002' = "61002 - Project Management";
+    '70003' = "70003 - Product - Operations";
+    '74502' = "74502 - Engineering - Tech Ops";
+    '75002' = "75002 - Engineering - Projects";
+    '75005' = "75005 - Engineering - Mgmt";
+    '75502' = "75502 - Mobility Services";
+    '75505' = "75505 - Mobility Services Mgmt";
+    '77002' = "77002 - Service Delivery Management";
+    '79008' = "79008 - Marketing";
+    '79504' = "79504 - Sales - Business Development";
+    '90006' = "90006 - Headquarters - Accounting";
+    '90007' = "90007 - Headquarters - HR";
+    '92509' = "92509 - Headquarters - IT"
+}
 
 #File Select Function
 function Get-FileName
@@ -70,7 +112,7 @@ function Get-FileName
 }
 
 #ADP data import
-$ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File"  -Obj
+# FOR MANUAL Import $ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File"  -Obj
 $ADPUsers = Import-Csv $ADPFile
 
 #Create New Error Log File
