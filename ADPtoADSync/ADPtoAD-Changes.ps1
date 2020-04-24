@@ -113,22 +113,43 @@ function Get-FileName
 
 #ADP data import
 # FOR MANUAL Import $ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File"  -Obj
-$ADPUsers = Import-Csv $ADPFile
+$ADPUsers = Import-Csv $sourcedir$sourcefile
 
 #Create New Error Log File
-If((test-path ($ADPFile.PSParentPath+"\adpimport.log")) -eq $False){New-Item ($ADPFile.PSParentPath+"\adpimport.log") -type file}
+$log = "$sourcedir\ADP-Modify.log"
+    if (!(Test-Path "$log"))
+    {
+       New-Item -path $sourcedir -type "file" -name $log
+       Write-Host "Created new logfile $log"
+    }
+    else
+    {
+      Write-Host "Logfile already exists and new text content added"
+    }
+
+#Write Timestamp
+$timestamp|Add-Content $log
+"Updating AD Account info from ADP:"
+"_______________________________________"|Add-Content $log
 
 #Loop though users in ADPFile import, match them to AD then write the attributes
-FOREACH($ADPUser in $ADPUsers)
+FOREACH($User in $ADPUsers)
 {
-    #Split out ADP FirstName, LastName, MiddleName
-    $adpln = (($adpuser."employee_name").split(",")[0]).trim()
-    $adpfn = ((($adpuser."employee_name").split(",")[1]).trim()).split("")[0].trim()
-	$adpname = "$adpln, $adpfn"
-
-	#Get ActiveDirectory User from email address
-	$email = ($ADPUser."Work Contact: Work Email").trim()
-    $aduser = Get-ADUser -Filter{emailaddress -eq $email} -properties *
+    #Get employee from employee ID
+    $ID = $user."Associate ID"
+	"   Getting AD account from ADP Associate ID - $ID, User "+$user."Last Name"+", "+$user."First Name:"|Add-Content $log
+	$ErrorActionPreference = 'stop'
+    try{$aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber}
+	catch{"   Unable to match $ID to any AD Accounts"}
+	$ErrorActionPreference = 'continue'
+	
+	#IF ID Matches an AD account update AD Attributes
+	IF($aduser -ne $null)
+	{
+		IF($aduser.)
+	}
+	
+	
     
 	#check if ADUser is null then try again
     if($aduser -eq $null -or $aduser -eq "")
