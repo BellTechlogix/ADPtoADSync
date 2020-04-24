@@ -164,9 +164,21 @@ FOREACH($user in $userlist)
             {
                 "        Username:"+$secondusername+ " Available, creating account:"|Add-Content $log
                 #creating account based upon first initial+middle initial+last name
-                #uncomment after Go-Live
-                #New-ADUser -SamAccountName $secondusername -Name ($user."First Name"+" "+$user."Last Name" ) -Surname $user."Last Name" -GivenName $user."First Name" -EmployeeNumber $user."Associate ID" -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')])|out-file $log -Append
-                New-ADUser -SamAccountName $secondusername -UserPrincipalName ($secondusername+"@belltechlogix.com") -Name ($user."First Name"+" "+$user."Last Name" )  -DisplayName ($user."First Name"+" "+$user."Last Name" ) -Surname $user."Last Name" -GivenName $user."First Name" -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) -Manager $manager.SamAccountName -Title $user.'Job Title Description' -Office $user.'Location Code' -StreetAddress $user.'Location Description' -OfficePhone $user.'Work Contact: Work Phone' -MobilePhone $user.'Personal Contact: Personal Mobile' -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" -Enabled 1 -PasswordNotRequired 1 -ErrorAction Continue|Add-Content $log			
+                New-ADUser -SamAccountName $secondusername `
+                -UserPrincipalName ($secondusername+"@belltechlogix.com") `
+                -Name ($user."First Name"+" "+$user."Last Name" ) `
+                -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+                -Surname $user."Last Name" -GivenName $user."First Name" `
+                -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" `
+                -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
+                -Manager $manager.SamAccountName -Title $user.'Job Title Description' `
+                -Office $user.'Location Code' -StreetAddress $user.'Location Description' `
+                -OfficePhone $user.'Work Contact: Work Phone' `
+                -MobilePhone $user.'Personal Contact: Personal Mobile' `
+                -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
+                -Enabled 1 -PasswordNotRequired 1 `
+                -ErrorAction Continue|Add-Content $log			
+                
                 Add-Content $log -Value "        simulated account created $secondusername"
                 Add-Content $log -Value "        waiting 30s before creating mailbox $secondusername"
                 Start-Sleep -Seconds 30
@@ -175,7 +187,7 @@ FOREACH($user in $userlist)
                 #try and create mailbox
                 $ErrorActionPreference = 'stop'        
     			try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-                catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+                catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 				$ErrorActionPreference = 'continue'
 
                 #Send email to helpdesk for succesful account creation with secondary username
@@ -195,17 +207,35 @@ FOREACH($user in $userlist)
         ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $initusername} -ErrorAction SilentlyContinue) -eq $false)
         {
             "        Username:"+$initusername+ " Available, creating account:"|Add-Content $log
+            
             #creating account based upon first initial+last name
-            #remove whatif after go live
-            New-ADUser -SamAccountName $initusername -UserPrincipalName ($initusername+"@belltechlogix.com") -Name ($user."First Name"+" "+$user."Last Name" )  -DisplayName ($user."First Name"+" "+$user."Last Name" ) -Surname $user."Last Name" -GivenName $user."First Name" -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) -Manager $manager.SamAccountName -Title $user.'Job Title Description' -Office $user.'Location Code' -StreetAddress $user.'Location Description' -OfficePhone $user.'Work Contact: Work Phone' -MobilePhone $user.'Personal Contact: Personal Mobile' -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" -Enabled 1 -PasswordNotRequired 1 -ErrorAction Continue|Add-Content $log
-            Add-Content $log -Value "        simulated account created $initusername"			
+            New-ADUser -SamAccountName $initusername `
+            -UserPrincipalName ($initusername+"@belltechlogix.com") `
+            -Name ($user."First Name"+" "+$user."Last Name" )  `
+            -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+            -Surname $user."Last Name" `
+            -GivenName $user."First Name" `
+            -Initials $user.'Middle Initial' `
+            -EmployeeNumber $user."Associate ID" `
+            -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
+            -Manager $manager.SamAccountName `
+            -Title $user.'Job Title Description' `
+            -Office $user.'Location Code' `
+            -StreetAddress $user.'Location Description' `
+            -OfficePhone $user.'Work Contact: Work Phone' `
+            -MobilePhone $user.'Personal Contact: Personal Mobile' `
+            -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
+            -Enabled 1 -PasswordNotRequired 1 `
+            -ErrorAction Continue|Add-Content $log
+
+            Add-Content $log -Value "        account created $initusername"			
             Start-Sleep -Seconds 30
 			Add-Content $log -Value "        creating mailbox for $initusername"
 
             #try and create mailbox
             $ErrorActionPreference = 'stop'        
     		try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-            catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+            catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 			$ErrorActionPreference = 'continue'
 
             #Send email to helpdesk for succesful account creation with initial username
