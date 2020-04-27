@@ -2,7 +2,7 @@
 # ADPtoAD-Changes.ps1
 # Created by Kristopher Roy
 # Created April 24 2020
-# Modified April 24 2020
+# Modified April 27 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
@@ -30,8 +30,8 @@
 #>
 
 #Source Variables
-$sourcedir = "\\BTL-DC-FTP01\c$\FTP\"
-$sourcefile = "AD Pull - Users Updated Today.csv"
+$sourcedir = "\\Btl-dc-ftp01\adp\"
+$sourcefile = "receive\AD Pull - Users Updated Today.csv"
 $date = get-date -Format "yyy-MM-dd"
 $timestamp = get-date -Format "yyyy-MM-dd (%H:mm:ss)"
 $archivedir = $sourcedir+"archived\UpdatedUsers"
@@ -40,7 +40,7 @@ $hrrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlog
 #hdmail recipients for sending report
 $hdrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
 #from address
-$from = "BTL-AccountCreation@belltechlogix.com"
+$from = "BTL-AccountMod@belltechlogix.com"
 #smtpserver
 $smtp = "smtp.belltechlogix.com"
 
@@ -112,7 +112,7 @@ function Get-FileName
 }
 
 #ADP data import
-# FOR MANUAL Import $ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File"  -Obj
+# FOR MANUAL Import uncomment this line $ADPFile = Get-FileName -Filter csv -Title "Select ADP Import File"  -Obj
 $ADPUsers = Import-Csv $sourcedir$sourcefile
 
 #Create New Error Log File
@@ -146,7 +146,63 @@ FOREACH($User in $ADPUsers)
 	#IF ID Matches an AD account update AD Attributes
 	IF($aduser -ne $null)
 	{
-		IF($aduser.)
+		IF($aduser.employeenumber -eq $ID)
+		{
+								    -UserPrincipalName ($secondusername+"@belltechlogix.com") `
+					    -Name ($user."First Name"+" "+$user."Last Name" ) `
+					    -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+					    -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" `
+					    -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
+					    -Manager $manager.SamAccountName -Title $user.'Job Title Description' `
+					    -Office $user.'Location Code' -StreetAddress $user.'Location Description' `
+					    -OfficePhone $user.'Work Contact: Work Phone' `
+					    -MobilePhone $user.'Personal Contact: Personal Mobile' `
+
+			
+			$modifymsg = "   Updating field from ADP:"
+			
+			#Set Variables
+			$user."Home Department Code" = $deptlookup[$user."Home Department Code".trim().trimstart('0')]
+			#Check For Middle Initial and create Name variable
+			IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
+				{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+			ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
+
+			#Match and Modify ADAccount info:
+			#FirstName
+			IF($user."First Name" -ne $aduser.GivenName){"     "+$aduser.GivenName+" to "+$ADPUser."First Name"+" "+$modifymsg|Add-Content $log
+			$aduser|Set-ADUser -GivenName $ADPUser."First Name"}
+			
+			#LastName
+			IF($user."Last Name" -ne $aduser.Surname){"     "+$aduser.Surname+" to "+$ADPUser."Last Name"+" "+$modifymsg|Add-Content $log
+			$aduser|Set-ADUser -Surname $ADPUser."Last Name"}
+			
+			#DisplayName
+			IF($Name -ne $aduser.displayname){"     "+$aduser.displayname+" to "+$Name+" "+$modifymsg|Add-Content $log
+			$aduser|Set-ADUser -dsplayname $Name}
+
+			#Name
+			IF($Name -ne $aduser.name){"     "+$aduser.Surname+" to "+$ADPUser."Last Name"+" "+$modifymsg|Add-Content $log
+			$aduser|Set-ADUser -dsplayname $Name}
+
+			#Department
+			IF($user."Home Department Code" -ne $aduser.department){$aduser|Set-ADUser -department $user."Home Department Code"
+				"     "+$aduser.department+" to "+$ADPUser."Home Department Code"+$modifymsg|Add-Content $log}
+
+
+			}
+			IF($user.'Job Title Description' -eq $null -or $user.'Job Title Description' -eq ""){"   Job Title Description $missingmsg"|Add-Content $log
+				$missing = 'True'
+				$failcode += "Job Title Description "
+			}
+			IF($user.'Location Code' -eq $null -or $user.'Location Code' -eq ""){"   Location Code $missingmsg"|Add-Content $log
+				$missing = 'True'
+				$failcode += "Location Code "
+
+			$aduser|Set-ADUser -MobilePhone $ADPUser."Work Contact: Work Mobile"
+	    }
+    
+		}
 	}
 	
 	

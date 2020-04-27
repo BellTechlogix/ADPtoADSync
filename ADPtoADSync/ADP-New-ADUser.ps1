@@ -128,6 +128,10 @@ IF($userlist -ne $null)
 
 	    #set ID
 	    $ID = $user."Associate ID"
+		#Check For Middle Initial and create Name variable
+		IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
+			{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+		ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
 
 	    #Check for missing fields
 	    $missingmsg = "missing from source ADP, halting creation and mailing HR"
@@ -199,8 +203,8 @@ IF($userlist -ne $null)
 					    #creating account based upon first initial+middle initial+last name
 					    New-ADUser -SamAccountName $secondusername `
 					    -UserPrincipalName ($secondusername+"@belltechlogix.com") `
-					    -Name ($user."First Name"+" "+$user."Last Name" ) `
-					    -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+					    -Name $Name `
+					    -DisplayName $Name `
 					    -Surname $user."Last Name" -GivenName $user."First Name" `
 					    -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" `
 					    -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
@@ -244,8 +248,8 @@ IF($userlist -ne $null)
 				    #creating account based upon first initial+last name
 				    New-ADUser -SamAccountName $initusername `
 				    -UserPrincipalName ($initusername+"@belltechlogix.com") `
-				    -Name ($user."First Name"+" "+$user."Last Name" )  `
-				    -DisplayName ($user."First Name"+" "+$user."Last Name" ) `
+				    -Name $Name  `
+				    -DisplayName $Name `
 				    -Surname $user."Last Name" `
 				    -GivenName $user."First Name" `
 				    -Initials $user.'Middle Initial' `
@@ -326,6 +330,7 @@ IF($userlist -ne $null)
 		    $aduser = $null
 		    $manager = $null
 		    $managerID = $null
+			$Name = $null
             Start-Sleep -Seconds 2
     }
     #move source file to archive
