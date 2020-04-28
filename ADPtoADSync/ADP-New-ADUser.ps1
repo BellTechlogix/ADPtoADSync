@@ -208,7 +208,7 @@ IF($userlist -ne $null)
 					    -Surname $user."Last Name" -GivenName $user."First Name" `
 					    -Initials $user.'Middle Initial' -EmployeeNumber $user."Associate ID" `
 					    -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
-					    -Manager $manager.SamAccountName -Title $user.'Job Title Description' `
+					    -Manager $manager -Title $user.'Job Title Description' `
 					    -Office $user.'Location Code' -StreetAddress $user.'Location Description' `
 					    -OfficePhone $user.'Work Contact: Work Phone' `
 					    -MobilePhone $user.'Personal Contact: Personal Mobile' `
@@ -255,7 +255,7 @@ IF($userlist -ne $null)
 				    -Initials $user.'Middle Initial' `
 				    -EmployeeNumber $user."Associate ID" `
 				    -Department ($deptlookup[$user."Home Department Code".trim().trimstart('0')]) `
-				    -Manager $manager.SamAccountName `
+				    -Manager $manager `
 				    -Title $user.'Job Title Description' `
 				    -Office $user.'Location Code' `
 				    -StreetAddress $user.'Location Description' `
