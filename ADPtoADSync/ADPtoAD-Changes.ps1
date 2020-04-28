@@ -139,7 +139,7 @@ FOREACH($User in $ADPUsers)
     $ID = $user."Associate ID"
 	"   Getting AD account from ADP Associate ID - $ID, User "+$user."Last Name"+", "+$user."First Name:"|Add-Content $log
 	$ErrorActionPreference = 'stop'
-    try{$aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber,initials}
+    try{$aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties *}
 	catch{"   Unable to match $ID to any AD Accounts"}
 	$ErrorActionPreference = 'continue'
 	

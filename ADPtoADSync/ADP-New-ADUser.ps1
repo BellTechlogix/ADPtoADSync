@@ -3,7 +3,7 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified April 24 2020
+# Modified April 28 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
@@ -200,7 +200,8 @@ IF($userlist -ne $null)
 				    ELSEIF([bool](get-aduser -Filter{SamAccountName -eq $secondusername} -ErrorAction SilentlyContinue) -eq $false)
 				    {
 					    "        Username:"+$secondusername+ " Available, creating account:"|Add-Content $log
-					    #creating account based upon first initial+middle initial+last name
+					    
+						#creating account based upon first initial+middle initial+last name
 					    New-ADUser -SamAccountName $secondusername `
 					    -UserPrincipalName ($secondusername+"@belltechlogix.com") `
 					    -Name $Name `
