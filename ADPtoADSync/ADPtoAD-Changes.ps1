@@ -139,7 +139,7 @@ FOREACH($User in $ADPUsers)
     $ID = $user."Associate ID"
 	"   Getting AD account from ADP Associate ID - $ID, User "+$user."Last Name"+", "+$user."First Name:"|Add-Content $log
 	$ErrorActionPreference = 'stop'
-    try{$aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber}
+    try{$aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber,initials}
 	catch{"   Unable to match $ID to any AD Accounts"}
 	$ErrorActionPreference = 'continue'
 	
@@ -156,7 +156,7 @@ FOREACH($User in $ADPUsers)
 
 			#get Managers AD Account
 		    $managerID = $user."Reports To Associate ID"
-		    $manager = get-aduser -filter 'employeenumber -like $managerID' -ErrorAction SilentlyContinue
+		    $manager = get-aduser -filter 'employeenumber -like $managerID' -properties DistinguishedName -ErrorAction SilentlyContinue
 
 			#Check For Middle Initial and create Name variable
 			IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
@@ -185,8 +185,8 @@ FOREACH($User in $ADPUsers)
 			$aduser|Set-ADUser -department $user."Home Department Code"}
 
 			#Manager
-			IF($manager.SamAccountName -ne $aduser.Manager){"     Manager "+$aduser.Manager+" to "+$manager.SamAccountName+" "+$modifymsg|Add-Content $log
-			$aduser|Set-ADUser -manager $manager.SamAccountName}
+			IF($manager.DisguishedName -ne $aduser.Manager){"     Manager "+$aduser.Manager+" to "+$manager.DistinguishedName+" "+$modifymsg|Add-Content $log
+			$aduser|Set-ADUser -manager $manager}
 
 			#Title
 			IF($user.'Job Title Description' -ne $aduser.Title){"     Title "+$aduser.Title+" to "+$user."Job Title Description"+$modifymsg|Add-Content $log
