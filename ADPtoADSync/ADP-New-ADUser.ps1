@@ -3,12 +3,12 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified April 28 2020
+# Modified April 29 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
 $sourcedir = "\\Btl-dc-ftp01\adp\"
-$sourcefile = "receive\AD Pull - Users Created Today.csv"
+$sourcefile = "receive\AD_Pull-Users_Created_Today.csv"
 $date = get-date -Format "yyy-MM-dd"
 $timestamp = get-date -Format "yyyy-MM-dd (%H:mm:ss)"
 $archivedir = $sourcedir+"archive"
@@ -167,7 +167,7 @@ IF($userlist -ne $null)
     
 	
 		    #Check that employee ID doesn't exist then create user account
-		    $aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber
+		    $aduser = get-aduser -filter 'employeenumber -like $ID' -ErrorAction SilentlyContinue -Properties employeenumber,whencreated
 		    If($aduser -eq $null)
 		    {
 			    "     Creating New User:"|Add-Content $log
@@ -213,6 +213,9 @@ IF($userlist -ne $null)
 					    -Office $user.'Location Code' -StreetAddress $user.'Location Description' `
 					    -OfficePhone $user.'Work Contact: Work Phone' `
 					    -MobilePhone $user.'Personal Contact: Personal Mobile' `
+                        -City $user.'Location City' `
+                        -PostalCode $user.'Location Postal Code' `
+                        -State $user.'Location State/Territory' `
 					    -path "OU=\#\#Automation_Purgatory,DC=btl,DC=bellind,DC=net" `
 					    -Enabled 1 -PasswordNotRequired 1 `
 					    -ErrorAction Continue|Add-Content $log			
@@ -291,7 +294,7 @@ IF($userlist -ne $null)
 		    }
 		    ELSEIF($aduser -ne $null)
 		    {
-        
+                IF(!($aduser.whencreated -gt (get-date).AddDays(-1))){
 			    #Send email to HR for User ID duplicate
 			    $htmlforHREmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Fail</span></h1>"
 			    $htmlforHREmail = $htmlforHREmail + "<h2 style='color: #2e6c80;'>Duplicate Employee Number: <span style='color: #000000;'>$ID</span></h2>"
@@ -302,6 +305,8 @@ IF($userlist -ne $null)
 			    "        Username:"+$aduser.SamAccountName+" with employeID:"+$aduser.employeenumber+" already exists, forwarding to HumanResources@belltechlogix.com"|add-content $log
 			    Send-MailMessage -from $from -to $hrrecipients -subject "BTL Pre-Existing employee ID" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log
 			    $htmlforHREmail = $null
+                }
+                ELSEIF(!($aduser.whencreated -lt (get-date).AddDays(-1))){Remove-Item $log}
 		    }
     
 	    }
@@ -320,7 +325,7 @@ IF($userlist -ne $null)
 		    $failcode = $null
 	    }
 		    #Move User log file
-		    move-item $log -Destination "$archivedir\NewUsers"
+		    try{move-item $log -Destination "$archivedir\NewUsers"}CATCH{}
 
             #clear variables for loop iteration
             $missing = $null
