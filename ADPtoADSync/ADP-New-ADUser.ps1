@@ -13,9 +13,9 @@ $date = get-date -Format "yyy-MM-dd"
 $timestamp = get-date -Format "yyyy-MM-dd (%H:mm:ss)"
 $archivedir = $sourcedir+"archive"
 #hrmail recipients for sending report
-$hrrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
+$hrrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>","BTLHR <HumanResources@belltechlogix.com>")
 #hdmail recipients for sending report
-$hdrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>")
+$hdrecipients = @("Kristopher <kroy@belltechlogix.com>","Jack <hchen@belltechlogix.com>","HelpDesk <Helpdesk@belltechlogix.com>")
 #from address
 $from = "BTL-AccountCreation@belltechlogix.com"
 #smtpserver
@@ -220,15 +220,15 @@ IF($userlist -ne $null)
 					    -Enabled 1 -PasswordNotRequired 1 `
 					    -ErrorAction Continue|Add-Content $log			
                 
-					    Add-Content $log -Value "        simulated account created $secondusername"
+					    Add-Content $log -Value "        account created $secondusername"
 					    Add-Content $log -Value "        waiting 30s before creating mailbox $secondusername"
 					    Start-Sleep -Seconds 30
                                 
 					    #try and create mailbox
 					    Add-Content $log -Value "        creating mailbox for $secondusername"
 					    $ErrorActionPreference = 'stop'        
-    				    try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-					    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+    				    try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+					    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 					    $ErrorActionPreference = 'continue'
 
 					    #Send email to helpdesk for succesful account creation with secondary username
@@ -238,7 +238,7 @@ IF($userlist -ne $null)
 					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$secondusername+"</span></h2>"
 					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
 					    "        Usernames:"+$secondusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
-					    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDsecondsuccessEmail -Attachments $log
+					    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDsecondsuccessEmail -Attachments $log|Add-Content $log
                 
 					    #clear html 
 					    $htmlforHDsecondsuccessEmail = $null
@@ -275,8 +275,8 @@ IF($userlist -ne $null)
 				    #try and create mailbox
 				    Add-Content $log -Value "        creating mailbox for $initusername"
 				    $ErrorActionPreference = 'stop'        
-    			    try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')]) -WhatIf}
-				    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1] -WhatIf} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+    			    try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+				    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 				    $ErrorActionPreference = 'continue'
 
 				    #Send email to helpdesk for succesful account creation with initial username
@@ -286,7 +286,7 @@ IF($userlist -ne $null)
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$initusername+"</span></h2>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
 				    "        Usernames:"+$HDInitialusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
-				    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDInitialsuccessEmail -Attachments $log
+				    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDInitialsuccessEmail -Attachments $log|Add-Content $log
                 
 				    #clear html 
 				    $htmlforHDInitialsuccessEmail = $null
@@ -303,7 +303,7 @@ IF($userlist -ne $null)
 			    $htmlforHREmail = $htmlforHREmail + "<h4><span style='color: #000000;'>Please Resolve User ID duplicate and contact the helpdesk for account creation</span></h4>"
 
 			    "        Username:"+$aduser.SamAccountName+" with employeID:"+$aduser.employeenumber+" already exists, forwarding to HumanResources@belltechlogix.com"|add-content $log
-			    Send-MailMessage -from $from -to $hrrecipients -subject "BTL Pre-Existing employee ID" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log
+			    Send-MailMessage -from $from -to $hrrecipients -subject "BTL Pre-Existing employee ID" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log|Add-Content $log
 			    $htmlforHREmail = $null
                 }
                 ELSEIF(!($aduser.whencreated -lt (get-date).AddDays(-1))){Remove-Item $log}
@@ -320,7 +320,7 @@ IF($userlist -ne $null)
 		    $htmlforHREmail = $htmlforHREmail + "<h4><span style='color: #000000;'>Please Resolve $failcode</span></h4>"
 
 		    "        $failcode, forwarding to HumanResources@belltechlogix.com"|add-content $log
-		    Send-MailMessage -from $from -to $hrrecipients -subject "BTL ADP Fields Missing" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log
+		    Send-MailMessage -from $from -to $hrrecipients -subject "BTL ADP Fields Missing" -smtpserver $smtp -BodyAsHtml $htmlforHREmail -Attachments $log|Add-Content $log
 		    $htmlforHREmail = $null
 		    $failcode = $null
 	    }
