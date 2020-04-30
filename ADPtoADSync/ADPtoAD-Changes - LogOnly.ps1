@@ -169,97 +169,98 @@ FOREACH($User in $ADPUsers)
 			IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
 			{
 				"     --Changing GivenName "+$aduser.GivenName+" to "+$user."First Name"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -GivenName $user."First Name"
+				#$aduser|Set-ADUser -GivenName $user."First Name"
 			}
 			
 			#LastName
 			IF(($user."Last Name" -ne $null -and $user."Last Name" -ne "") -and $user."Last Name" -ne $aduser.Surname)
 			{
 				"     --Changing Surname "+$aduser.Surname+" to "+$user."Last Name"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -Surname $user."Last Name"
+				#$aduser|Set-ADUser -Surname $user."Last Name"
 			}
 			
 			#DisplayName
 			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.displayname)
 			{
 				"     --Changing Displayname "+$aduser.displayname+" to "+$Name+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -displayname $Name
+				#$aduser|Set-ADUser -displayname $Name
 			}
 
 			#Name
 			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.name)
 			{
 				"     --Changing Name "+$aduser.name+" to "+$Name+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -name $Name
+				#$aduser|Set-ADUser -name $Name
 			}
 
 			#Department
 			IF(($user."Home Department Code" -ne $null -and $user."Home Department Code" -ne "") -and $user."Home Department Code" -ne $aduser.department)
 			{
 				"     --Changing Department "+$aduser.department+" to "+$user."Home Department Code"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -department $user."Home Department Code"
+				#$aduser|Set-ADUser -department $user."Home Department Code"
 			}
 
 			#Manager
 			IF(($manager.DisguishedName -ne $null -and $manager.DisguishedName -ne "") -and $manager.DisguishedName -ne $aduser.Manager)
 			{
 				"     --Changing Manager "+$aduser.Manager+" to "+$manager.DistinguishedName+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -manager $manager
+				#$aduser|Set-ADUser -manager $manager
 			}
 
 			#Title
 			IF(($user."Job Title Description" -ne $null -and $user."Job Title Description" -ne "") -and $user.'Job Title Description' -ne $aduser.Title)
 			{
 				"     --Changing Title "+$aduser.Title+" to "+$user."Job Title Description"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -Title $user."Job Title Description"
+				#$aduser|Set-ADUser -Title $user."Job Title Description"
 			}
 
 			#Office
 			IF(($user."Location Code" -ne $null -and $user."Location Code" -ne "") -and $user.'Location Code' -ne $aduser.Office)
 			{
 				"     --Changing Office "+$aduser.Office+" to "+$user."Location Code"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -Office $user."Location Code"}
+				#$aduser|Set-ADUser -Office $user."Location Code"
+			}
 
 			#Office Address
 			IF(($user."Location Description" -ne $null -and $user."Location Description" -ne "") -and $user.'Location Description' -ne $aduser.StreetAddress)
 			{
 				"     --Changing Office Address "+$aduser.StreetAddress+" to "+$user."Location Description"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -StreetAddress $user."Location Description"
+				#$aduser|Set-ADUser -StreetAddress $user."Location Description"
 			}
 
 			#Office Phone
 			IF(($user."Work Contact: Work Phone" -ne $null -and $user."Work Contact: Work Phone" -ne "") -and $user.'Work Contact: Work Phone' -ne $aduser.OfficePhone)
 			{
 				"     --Changing Work Phone "+$aduser.OfficePhone+" to "+$user."Work Contact: Work Phone"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -OfficePhone $user."Work Contact: Work Phone"
+				#$aduser|Set-ADUser -OfficePhone $user."Work Contact: Work Phone"
 			}
 
 			#Mobile Phone
 			IF(($user."Personal Contact: Personal Mobile" -ne $null -and $user."Personal Contact: Personal Mobile" -ne "") -and $user.'Personal Contact: Personal Mobile' -ne $aduser.MobilePhone)
 			{
 				"     --Changing Mobile Phone "+$aduser.MobilePhone+" to "+$user."Personal Contact: Personal Mobile"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -MobilePhone $user."Personal Contact: Personal Mobile"
+				#$aduser|Set-ADUser -MobilePhone $user."Personal Contact: Personal Mobile"
 			}
 		
 			#City
 			If(($user."Location City" -ne $null -and $user."Location City" -ne "") -and $user."Location City" -ne $aduser.city)
 			{
 				"     --Changing City "+$aduser.city+" to "+$user."Location City"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -City $ADPUser."Location City"
+				#$aduser|Set-ADUser -City $ADPUser."Location City"
 			}
 			
 			#Zip
 			if(($user."Location Postal Code" -ne $null -and $user."Location Postal Code" -ne "") -and $user."Location Postal Code" -ne $aduser.PostalCode)
 			{
 				"     --Changing Zip "+$aduser.PostalCode+" to "+$user."Location Postal Code"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -PostalCode $ADPUser."Location Postal Code"
+				#$aduser|Set-ADUser -PostalCode $ADPUser."Location Postal Code"
 			}
 			
 			#State
 			if(($user."Location State/Territory" -ne $null -and $user."Location State/Territory" -ne "") -and $user."Location State/Territory" -ne $aduser.State)
 			{
 				"     --Changing State "+$aduser.State+" to "+$user."Location State/Territory"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -State $ADPUser."Location State/Territory"
+				#$aduser|Set-ADUser -State $ADPUser."Location State/Territory"
 			}
 		
 		}
