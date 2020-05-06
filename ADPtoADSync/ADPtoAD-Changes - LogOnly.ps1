@@ -2,7 +2,7 @@
 # ADPtoAD-Changes.ps1
 # Created by Kristopher Roy
 # Created April 24 2020
-# Modified April 27 2020
+# Modified May 06 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
@@ -161,17 +161,28 @@ FOREACH($User in $ADPUsers)
 
 			#Check For Middle Initial and create Name variable
 			IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
-				{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
-			ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
+				{
+					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
+						{$Name = ($aduser.GivenName+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+					ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+				}
+			ELSE
+				{
+					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
+						{$Name = ($aduser.GivenName+" "+$user."Last Name")}
+					ELSE{$Name = ($user."First Name"+" "+$user."Last Name")}
+				}
 
 			#Match and Modify ADAccount info:
 			#FirstName
+			<#
+			Commented out First Name changes until corporate policy decided
 			IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
 			{
 				"     --Changing GivenName "+$aduser.GivenName+" to "+$user."First Name"+" "+$modifymsg|Add-Content $log
 				#$aduser|Set-ADUser -GivenName $user."First Name"
 			}
-			
+			#>
 			#LastName
 			IF(($user."Last Name" -ne $null -and $user."Last Name" -ne "") -and $user."Last Name" -ne $aduser.Surname)
 			{
@@ -190,7 +201,7 @@ FOREACH($User in $ADPUsers)
 			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.name)
 			{
 				"     --Changing Name "+$aduser.name+" to "+$Name+" "+$modifymsg|Add-Content $log
-				#$aduser|Set-ADUser -name $Name
+				#$aduser|Rename-ADObject -NewName $Name
 			}
 
 			#Department
