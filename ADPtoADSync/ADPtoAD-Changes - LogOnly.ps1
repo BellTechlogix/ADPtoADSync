@@ -2,7 +2,7 @@
 # ADPtoAD-Changes.ps1
 # Created by Kristopher Roy
 # Created April 24 2020
-# Modified May 06 2020
+# Modified May 21 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
@@ -79,6 +79,16 @@ $deptlookup = @{
     '92509' = "92509 - Headquarters - IT"
 }
 
+#definition lookup for Suffixes
+$suffixlookup = @{
+    'Junior' = "Jr";
+    'Senior' = "Sr";
+    'The second' = "II";
+    'the third' = "III";
+    'the fourth' = "IV";
+    'the fifth' = "V"
+}
+
 #File Select Function
 function Get-FileName
 {
@@ -129,7 +139,7 @@ $log = "$sourcedir\ADP-Modify.log"
 
 #Write Timestamp
 $timestamp|Add-Content $log
-"Updating AD Account info from ADP:"
+"Updating AD Account info from ADP:"|Add-Content $log
 "---------------------------------------------------"|Add-Content $log
 
 #Loop though users in ADPFile import, match them to AD then write the attributes

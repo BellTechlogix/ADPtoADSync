@@ -129,7 +129,7 @@ $log = "$sourcedir\ADP-Modify.log"
 
 #Write Timestamp
 $timestamp|Add-Content $log
-"Updating AD Account info from ADP:"
+"Updating AD Account info from ADP:"|Add-Content $log
 "---------------------------------------------------"|Add-Content $log
 
 #Loop though users in ADPFile import, match them to AD then write the attributes
@@ -158,52 +158,6 @@ FOREACH($User in $ADPUsers)
 			#get Managers AD Account
 		    $managerID = $user."Reports To Associate ID"
 		    TRY{$manager = get-aduser -filter 'employeenumber -like $managerID' -properties DistinguishedName -ErrorAction SilentlyContinue}CATCH{$manager = $null}
-
-			#Check For Middle Initial and create Name variable
-			IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
-				{
-					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
-						{$Name = ($aduser.GivenName+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
-					ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
-				}
-			ELSE
-				{
-					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
-						{$Name = ($aduser.GivenName+" "+$user."Last Name")}
-					ELSE{$Name = ($user."First Name"+" "+$user."Last Name")}
-				}
-
-			#Match and Modify ADAccount info:
-			#FirstName
-			<#
-			Commented out First Name changes until corporate policy decided
-			IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
-			{
-				"     --Changing GivenName "+$aduser.GivenName+" to "+$user."First Name"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -GivenName $user."First Name"
-			}
-			#>
-			
-			#LastName
-			IF(($user."Last Name" -ne $null -and $user."Last Name" -ne "") -and $user."Last Name" -ne $aduser.Surname)
-			{
-				"     --Changing Surname "+$aduser.Surname+" to "+$user."Last Name"+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -Surname $user."Last Name"
-			}
-			
-			#DisplayName
-			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.displayname)
-			{
-				"     --Changing Displayname "+$aduser.displayname+" to "+$Name+" "+$modifymsg|Add-Content $log
-				$aduser|Set-ADUser -displayname $Name
-			}
-
-			#Name
-			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.name)
-			{
-				"     --Changing Name "+$aduser.name+" to "+$Name+" "+$modifymsg|Add-Content $log
-				$aduser|Rename-ADObject -NewName $Name
-			}
 
 			#Department
 			IF(($user."Home Department Code" -ne $null -and $user."Home Department Code" -ne "") -and $user."Home Department Code" -ne $aduser.department)
@@ -272,6 +226,59 @@ FOREACH($User in $ADPUsers)
 			{
 				"     --Changing State "+$aduser.State+" to "+$user."Location State/Territory"+" "+$modifymsg|Add-Content $log
 				$aduser|Set-ADUser -State $ADPUser."Location State/Territory"
+			}
+			
+			#Check For Middle Initial and create Name variable
+			IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
+				{
+					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
+						{$Name = ($aduser.GivenName+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+					ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+				}
+			ELSE
+				{
+					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
+						{$Name = ($aduser.GivenName+" "+$user."Last Name")}
+					ELSE{$Name = ($user."First Name"+" "+$user."Last Name")}
+				}
+
+			#Match and Modify ADAccount info:
+			#FirstName
+			<#
+			Commented out First Name changes until corporate policy decided
+			IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
+			{
+				"     --Changing GivenName "+$aduser.GivenName+" to "+$user."First Name"+" "+$modifymsg|Add-Content $log
+				$aduser|Set-ADUser -GivenName $user."First Name"
+			}
+			#>
+			
+			#Middle Initial
+			IF(($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")-and $user.'Middle Initial' -ne $aduser.initials)
+			{
+				"     --Changing Middle Initial "+$aduser.initials+" to "+$user."Middle Initial"+" "+$modifymsg|Add-Content $log
+				$aduser|Set-ADUser -Initials $user."Middle Initial"
+			}
+			
+			#LastName
+			IF(($user."Last Name" -ne $null -and $user."Last Name" -ne "") -and $user."Last Name" -ne $aduser.Surname)
+			{
+				"     --Changing Surname "+$aduser.Surname+" to "+$user."Last Name"+" "+$modifymsg|Add-Content $log
+				$aduser|Set-ADUser -Surname $user."Last Name"
+			}
+			
+			#DisplayName
+			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.displayname)
+			{
+				"     --Changing Displayname "+$aduser.displayname+" to "+$Name+" "+$modifymsg|Add-Content $log
+				$aduser|Set-ADUser -displayname $Name
+			}
+
+			#Name
+			IF(($Name -ne $null -and $Name -ne "") -and $Name -ne $aduser.name)
+			{
+				"     --Changing Name "+$aduser.name+" to "+$Name+" "+$modifymsg|Add-Content $log
+				$aduser|Rename-ADObject -NewName $Name
 			}
 		
 		}
