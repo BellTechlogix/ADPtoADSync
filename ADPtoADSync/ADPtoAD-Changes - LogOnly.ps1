@@ -207,18 +207,19 @@ FOREACH($User in $ADPUsers)
 		    $managerID = $user."Reports To Associate ID"
 		    TRY{$manager = get-aduser -filter 'employeenumber -like $managerID' -properties DistinguishedName -ErrorAction SilentlyContinue}CATCH{$manager = $null}
 
-			#Check For Middle Initial and create Name variable
+			#Check For Middle Initial and Name Suffix and create Name variable
 			IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
 				{
-					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
-						{$Name = ($aduser.GivenName+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+					IF($user.'Generation Suffix Description' -ne $null -and $user.'Generation Suffix Description' -ne "")
+						{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
 					ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
 				}
+		
 			ELSE
 				{
-					IF(($user."First Name" -ne $null -and $user."First Name" -ne "") -and $user."First Name" -ne $aduser.GivenName)
-						{$Name = ($aduser.GivenName+" "+$user."Last Name")}
-					ELSE{$Name = ($user."First Name"+" "+$user."Last Name")}
+					IF($user.'Generation Suffix Description' -ne $null -and $user.'Generation Suffix Description' -ne "")
+					{$Name = ($user."First Name"+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+					ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
 				}
 
 			#Match and Modify ADAccount info:

@@ -176,10 +176,20 @@ IF($userlist -ne $null)
 
 	    #set ID
 	    $ID = $user."Associate ID"
-		#Check For Middle Initial and create Name variable
+		#Check For Middle Initial and Name Suffix and create Name variable
 		IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
-			{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
-		ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
+			{
+				IF($user.'Generation Suffix Description' -ne $null -and $user.'Generation Suffix Description' -ne "")
+					{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+				ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+			}
+		
+		ELSE
+			{
+				IF($user.'Generation Suffix Description' -ne $null -and $user.'Generation Suffix Description' -ne "")
+				{$Name = ($user."First Name"+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+				ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
+			}
 
 	    #Check for missing fields
 	    $missingmsg = "missing from source ADP, halting creation and mailing HR"
