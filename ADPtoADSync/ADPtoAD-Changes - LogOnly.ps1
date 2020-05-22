@@ -2,7 +2,7 @@
 # ADPtoAD-Changes.ps1
 # Created by Kristopher Roy
 # Created April 24 2020
-# Modified May 21 2020
+# Modified May 22 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later

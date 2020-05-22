@@ -2,7 +2,7 @@
 # ADPtoAD-Changes.ps1
 # Created by Kristopher Roy
 # Created April 24 2020
-# Modified May 06 2020
+# Modified May 22 2020
 # Script purpose - Write ADP details back to AD Attribute
 <#
 	AD Attribute Details for use in Script now/or later
@@ -115,6 +115,16 @@ $getsemail = @{
 	'Senior Depot Associate - Transfer' = 'false';
 	'Senior Repair Technician A' = 'false';
 
+}
+
+#definition lookup for Suffixes
+$suffixlookup = @{
+    'Junior' = "Jr";
+    'Senior' = "Sr";
+    'The second' = "II";
+    'the third' = "III";
+    'the fourth' = "IV";
+    'the fifth' = "V"
 }
 
 #File Select Function

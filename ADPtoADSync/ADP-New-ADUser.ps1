@@ -3,7 +3,7 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified April 29 2020
+# Modified May 22 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
@@ -98,6 +98,16 @@ $getsemail = @{
 	'Senior Depot Associate - Transfer' = 'false';
 	'Senior Repair Technician A' = 'false';
 
+}
+
+#definition lookup for Suffixes
+$suffixlookup = @{
+    'Junior' = "Jr";
+    'Senior' = "Sr";
+    'The second' = "II";
+    'the third' = "III";
+    'the fourth' = "IV";
+    'the fifth' = "V"
 }
 
 #definition for Mailbox Databases
