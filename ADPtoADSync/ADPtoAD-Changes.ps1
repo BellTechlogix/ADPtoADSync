@@ -79,6 +79,44 @@ $deptlookup = @{
     '92509' = "92509 - Headquarters - IT"
 }
 
+#No Email Jobs
+$getsemail = @{
+	'Component Cleaning Technician' = 'false';
+	'Component Repair Technician II' = 'false';
+	'Component Repair Technician III' = 'false';
+	'Depot Associate - Cleaner' = 'false';
+	'Depot Associate - Delivery' = 'false';
+	'Depot Associate - Green Grocery' = 'false';
+	'Depot Associate - Ink Sort' = 'false';
+	'Depot Associate - Rebox' = 'false';
+	'Depot Associate - Refuse & Recycle Collector' = 'false';
+	'Depot Associate - Salvage' = 'false';
+	'Depot Associate - Unbox' = 'false';
+	'Fulfillment Associate' = 'false';
+	'Ink Fixture Technician' = 'false';
+	'Inventory Associate' = 'false';
+	'Inventory Control Associate' = 'false';
+	'POP Technician' = 'false';
+	'Projector Technician' = 'false';
+	'Repair Associate A' = 'false';
+	'Repair Technician A' = 'false';
+	'Repair Technician B' = 'false';
+	'Senior Depot Associate - Bulk Storage' = 'false';
+	'Senior Depot Associate - Green Grocery' = 'false';
+	'Senior Depot Associate - Ink Sort' = 'false';
+	'Senior Depot Associate - Inventory Admin' = 'false';
+	'Senior Depot Associate - Instapak' = 'false';
+	'Senior Depot Associate - Kits' = 'false';
+	'Senior Depot Associate - Large Format' = 'false';
+	'Senior Depot Associate - Optic Engine' = 'false';
+	'Senior Depot Associate  - Projectors' = 'false';
+	'Senior Depot Associate - Parts Receiving' = 'false';
+	'Senior Depot Associate - Production Reports' = 'false';
+	'Senior Depot Associate - Transfer' = 'false';
+	'Senior Repair Technician A' = 'false';
+
+}
+
 #File Select Function
 function Get-FileName
 {
