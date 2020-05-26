@@ -238,7 +238,7 @@ IF($userlist -ne $null)
 				    IF($lnamecount -gt 17){$lnamecount = $lnamecount - 1}
 				    $ErrorActionPreference = 'stop'
 				    try{$secondusername = ($user."First Name".substring(0,1)+$user."Middle Initial".substring(0,1)+$user."Last Name".substring(0,$lnamecount))}
-				    catch{$secondusername = ($user."First Name".substring(0,1)+$user."First Name".substring(1,2)+$user."Last Name".substring(0,$lnamecount))}
+				    catch{$secondusername = ($user."First Name".substring(0,1)+$user."First Name".substring(0,2)+$user."Last Name".substring(0,$lnamecount))}
 				    $ErrorActionPreference = 'continue'
 				    "        "+$initusername+" already exists attempting "+$secondusername|Add-Content $log
             
@@ -284,22 +284,31 @@ IF($userlist -ne $null)
                                 
 					    #try and create mailbox
 					    Add-Content $log -Value "        creating mailbox for $secondusername"
-					    $ErrorActionPreference = 'stop'        
-    				    try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
-					    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
-					    $ErrorActionPreference = 'continue'
+					    IF($getsemail[$user."Job Title Description".trim()] -ne "false")
+						{
+							$ErrorActionPreference = 'stop'        
+    						try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+							catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+							$ErrorActionPreference = 'continue'
+							Start-Sleep -Seconds 30
+							$usermailbox = get-aduser -Filter{SamAccountName -eq $secondusername}|select -exp mail
+						}
+						IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
 
 					    #Send email to helpdesk for succesful account creation with secondary username
 					    $htmlforHDsecondsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
 					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
 					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
 					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$secondusername+"</span></h2>"
-					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
-					    "        Usernames:"+$secondusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
-					    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDsecondsuccessEmail -Attachments $log|Add-Content $log
+					    $htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>Mailbox Created:&nbsp;<span style='color: #000000;'>"+$usermailbox+"</span></h2>"
+						$htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
+					    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail +  "<h4><span style='color: #000000;'>HR Please verify and update ADP with the new Email Address if applicable</span></h4>"
+						"        Usernames:"+$secondusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
+					    Send-MailMessage -from $from -to $hdrecipients,$hrrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDsecondsuccessEmail -Attachments $log|Add-Content $log
                 
 					    #clear html 
 					    $htmlforHDsecondsuccessEmail = $null
+						$usermailbox = $null
             
 				    }
 			    }
@@ -332,22 +341,31 @@ IF($userlist -ne $null)
 			
 				    #try and create mailbox
 				    Add-Content $log -Value "        creating mailbox for $initusername"
-				    $ErrorActionPreference = 'stop'        
-    			    try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
-				    catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
-				    $ErrorActionPreference = 'continue'
-
+				    $ErrorActionPreference = 'stop'
+					IF($getsemail[$user."Job Title Description".trim()] -ne "false")
+					{
+    					try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+						catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
+						$ErrorActionPreference = 'continue'
+						Start-Sleep -Seconds 30
+						$usermailbox = get-aduser -Filter{SamAccountName -eq $initusername}|select -exp mail
+					}
+					IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
+			
 				    #Send email to helpdesk for succesful account creation with initial username
 				    $htmlforHDInitialsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADUSER Account Created:&nbsp;<span style='color: #000000;'>"+$initusername+"</span></h2>"
+					$htmlforHDsecondsuccessEmail = $htmlforHDsecondsuccessEmail + "<h2 style='color: #2e6c80;'>Mailbox Created:&nbsp;<span style='color: #000000;'>"+$usermailbox+"</span></h2>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail +  "<h4><span style='color: #000000;'>Please verify account and mailbox success and accuracy</span></h4>"
-				    "        Usernames:"+$HDInitialusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
-				    Send-MailMessage -from $from -to $hdrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDInitialsuccessEmail -Attachments $log|Add-Content $log
+				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail +  "<h4><span style='color: #000000;'>HR Please verify and update ADP with the new Email Address</span></h4>"
+					"        Usernames:"+$HDInitialusername+" was succesfully created, forwarding to ServiceDesk@belltechlogix.com for review"|Add-Content $log
+				    Send-MailMessage -from $from -to $hdrecipients,$hrrecipients -subject "BTL Succesfull Auto-Account Creation" -smtpserver $smtp -BodyAsHtml $htmlforHDInitialsuccessEmail -Attachments $log|Add-Content $log
                 
 				    #clear html 
 				    $htmlforHDInitialsuccessEmail = $null
+					$usermailbox = $null
 			    }
 		    }
 		    ELSEIF($aduser -ne $null)
