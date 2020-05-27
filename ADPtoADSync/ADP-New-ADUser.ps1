@@ -291,7 +291,7 @@ IF($userlist -ne $null)
 							catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 							$ErrorActionPreference = 'continue'
 							Start-Sleep -Seconds 30
-							$usermailbox = get-aduser -Filter{SamAccountName -eq $secondusername}|select -exp mail
+							$usermailbox = get-aduser -Filter{SamAccountName -eq $secondusername} -properties mail|select -exp mail
 						}
 						IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
 
@@ -349,7 +349,7 @@ IF($userlist -ne $null)
 						catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 						$ErrorActionPreference = 'continue'
 						Start-Sleep -Seconds 30
-						$usermailbox = get-aduser -Filter{SamAccountName -eq $initusername}|select -exp mail
+						$usermailbox = get-aduser -Filter{SamAccountName -eq $initusername} -properties mail|select -exp mail
 					}
 					IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
 			
