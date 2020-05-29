@@ -3,7 +3,7 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified May 27 2020
+# Modified May 29 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
@@ -38,7 +38,7 @@ $deptlookup = @{
     '15102' = "15102 - Asset Management Services";
 	'15402' = "15402 - HII Services";
     '20202' = "20202 - Indiana Depot";
-    '20502' = "20502 - Virgina Depot";
+    '20502' = "20502 - Virginia Depot";
     '21102' = "21102 - USF Services";
     '30502' = "30502 - Deskside Services";
     '55002' = "55002 - Service Desk";
@@ -238,7 +238,7 @@ IF($userlist -ne $null)
 				    IF($lnamecount -gt 17){$lnamecount = $lnamecount - 1}
 				    $ErrorActionPreference = 'stop'
 				    try{$secondusername = ($user."First Name".substring(0,1)+$user."Middle Initial".substring(0,1)+$user."Last Name".substring(0,$lnamecount))}
-				    catch{$secondusername = ($user."First Name".substring(0,1)+$user."First Name".substring(0,2)+$user."Last Name".substring(0,$lnamecount))}
+				    catch{$secondusername = ($user."First Name".substring(0,1)+$user."First Name".substring(1,1)+$user."Last Name".substring(0,$lnamecount))}
 				    $ErrorActionPreference = 'continue'
 				    "        "+$initusername+" already exists attempting "+$secondusername|Add-Content $log
             
@@ -353,7 +353,7 @@ IF($userlist -ne $null)
 					}
 					IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
 			
-				    #Send email to helpdesk for succesful account creation with initial username
+				    #Send email to helpdesk and Human Resources for successful account creation with initial username and email if applicable
 				    $htmlforHDInitialsuccessEmail = "<h1 style='color: #5e9ca0;'><span style='text-decoration: underline;'>User Account Creation Success</span></h1>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>User Account Created for Employee: <span style='color: #000000;'>$ID</span></h2>"
 				    $htmlforHDInitialsuccessEmail = $htmlforHDInitialsuccessEmail + "<h2 style='color: #2e6c80;'>ADPUSER:&nbsp;<span style='color: #000000;'>"+$USER."First Name"+" "+$USER."Last Name"+"</span></h2>"
