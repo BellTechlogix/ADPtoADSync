@@ -180,15 +180,33 @@ IF($userlist -ne $null)
 		IF($user.'Middle Initial' -ne $null -and $user.'Middle Initial' -ne "")
 			{
 				IF($user.'Generation Suffix Description' -ne $null -and $user.'Generation Suffix Description' -ne "")
-					{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
-				ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+				{
+					IF($user.'Preferred Name' -ne $null -and $user.'Preferred Name' -ne "")
+					{$Name = ($user."Preferred Name"+" "+$user.'Middle Initial'+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+					ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+				}
+				ELSE
+				{
+					IF($user.'Preferred Name' -ne $null -and $user.'Preferred Name' -ne "")
+					{$Name = ($user."Preferred Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+					ELSE{$Name = ($user."First Name"+" "+$user.'Middle Initial'+" "+$user."Last Name" )}
+				}
 			}
 		
 		ELSE
 			{
 				IF($user.'Generation Suffix Description' -ne $null -and $user.'Generation Suffix Description' -ne "")
-				{$Name = ($user."First Name"+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
-				ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
+				{
+					IF($user.'Preferred Name' -ne $null -and $user.'Preferred Name' -ne "")
+					{$Name = ($user."Preferred Name"+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+					ELSE{$Name = ($user."First Name"+" "+$user."Last Name"+" "+($suffixlookup[$user."Generation Suffix Description".trim().trimstart('0')]))}
+				}
+				ELSE
+				{
+					IF($user.'Preferred Name' -ne $null -and $user.'Preferred Name' -ne "")
+					{$Name = ($user."Preferred Name"+" "+$user."Last Name" )}
+					ELSE{$Name = ($user."First Name"+" "+$user."Last Name" )}
+				}
 			}
 
 	    #Check for missing fields
