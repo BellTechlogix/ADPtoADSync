@@ -3,7 +3,7 @@
 #
 # Created by Kristopher Roy
 # Created Apr 20 2020
-# Modified May 29 2020
+# Modified June 24 2020
 # Script purpose - Create AD User on Import from ADP
 
 #Source Variables
@@ -298,7 +298,7 @@ IF($userlist -ne $null)
                 
 					    Add-Content $log -Value "        account created $secondusername"
 					    Add-Content $log -Value "        waiting 30s before creating mailbox $secondusername"
-					    Start-Sleep -Seconds 30
+					    Start-Sleep -Seconds 300
                                 
 					    #try and create mailbox
 					    Add-Content $log -Value "        creating mailbox for $secondusername"
@@ -308,7 +308,7 @@ IF($userlist -ne $null)
     						try{Enable-Mailbox -Identity $secondusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 							catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $secondusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 							$ErrorActionPreference = 'continue'
-							Start-Sleep -Seconds 30
+							Start-Sleep -Seconds 60
 							$usermailbox = get-aduser -Filter{SamAccountName -eq $secondusername} -properties mail|select -exp mail
 						}
 						IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
@@ -356,7 +356,7 @@ IF($userlist -ne $null)
 				    -ErrorAction Continue|Add-Content $log
 
 				    Add-Content $log -Value "        account created $initusername"			
-				    Start-Sleep -Seconds 30
+				    Start-Sleep -Seconds 300
 			
 				    #try and create mailbox
 				    Add-Content $log -Value "        creating mailbox for $initusername"
@@ -366,7 +366,7 @@ IF($userlist -ne $null)
     					try{Enable-Mailbox -Identity $initusername -Database ($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 						catch{Invoke-Command -Session $remoteex -ScriptBlock{Enable-Mailbox -Identity $args[0] -Database $args[1]} -ArgumentList $initusername,($mbdblookup[$user."Home Department Code".trim().trimstart('0')])}
 						$ErrorActionPreference = 'continue'
-						Start-Sleep -Seconds 30
+						Start-Sleep -Seconds 60
 						$usermailbox = get-aduser -Filter{SamAccountName -eq $initusername} -properties mail|select -exp mail
 					}
 					IF($usermailbox -eq $null){$usermailbox = "Mailbox not generated"}
